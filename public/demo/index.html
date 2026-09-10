@@ -596,17 +596,21 @@ function say(t){
 document.getElementById("tone").addEventListener("click",function(){
   var b=this, cv=document.getElementById("cv"), cad=document.getElementById("cad");
   b.classList.add("live"); b.textContent="TONE OUT";
-  cad.textContent="\u2022 \u2022 \u2022";
-  var d=twoTone();
-  setTimeout(function(){ cad.textContent=ALARM1; say(ALARM1); },d*1000);
+  // THE CLOCK STARTS FIRST AND UNCONDITIONALLY. Audio is a bonus, never a dependency.
   var t0=Date.now();
   cv.className="cv run";
   var iv=setInterval(function(){
     var el=(Date.now()-t0)/1000, left=80-el;
     if(left>0){ cv.textContent=Math.ceil(left); }
     else { cv.textContent="+"+Math.floor(-left); cv.className="cv over"; }
-    if(el>140){ clearInterval(iv); b.classList.remove("live"); b.textContent="SOUND THE TONE"; }
+    if(el>150){ clearInterval(iv); b.classList.remove("live"); b.textContent="SOUND THE TONE"; }
   },100);
+  var d=4.2;
+  try { cad.textContent="\u2022 \u2022 \u2022"; d=twoTone(); } catch(e){ cad.textContent="(tone unavailable)"; }
+  setTimeout(function(){
+    cad.textContent=ALARM1;
+    try { say(ALARM1); } catch(e){}
+  }, d*1000);
 });
 </script>
 </div></body></html>
