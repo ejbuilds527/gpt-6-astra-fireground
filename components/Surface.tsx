@@ -187,7 +187,7 @@ function Staging({ data, identity }: { data: Data; identity: SurfaceIdentity }) 
 }
 function ShuttleSummary({ call }: { call?: Data }) {
   const v = value(call);
-  return <Card title="The shuttle"><div className="two"><Stat label="TANKERS REQUIRED" amount={v.tankers_required}/><Stat label="DELIVERED" amount={v.sustained_gpm} unit="gpm"/></div><p className="tsub">{number(v.demand_gpm)} gpm needed · margin {number(v.margin_gpm)} gpm</p><p className="warn">{v.verdict || call?.output?.why || 'UNGRADED'}</p><p className="hint">{v.route_status} · tanker capacities: {(v.tankers || []).map((t: Data) => t.capacity_source).filter((s: string, i: number, all: string[]) => all.indexOf(s) === i).join(', ') || 'UNKNOWN'}</p></Card>;
+  return <Card title="The shuttle"><div className="two"><Stat label="TANKERS REQUIRED" amount={v.tankers_required}/><Stat label="DELIVERED" amount={v.sustained_gpm} unit="gpm"/></div><p className="tsub">{number(v.demand_gpm)} gpm needed · margin {number(v.margin_gpm)} gpm</p><p className="warn">{v.verdict || call?.output?.why || 'UNGRADED'}</p><p className="hint">{v.route_status} · tanker capacities: {(v.tankers || []).map((t: Data) => t.capacity_source).filter((s: string, i: number, all: string[]) => all.indexOf(s) === i).join(', ') || 'UNKNOWN'}</p>{v.fill_site_finding ? <p className="warn">{String(v.fill_site_finding)}</p> : null}{v.fill_site_utilisation ? <p className="hint">Fill point occupied {number(v.fill_site_utilisation)}% of the cycle. Queue time is NOT modelled, so the cycle is a floor, not a total.</p> : null}</Card>;
 }
 function ShuttleLoop({ call }: { call: Data }) {
   const v = value(call);
