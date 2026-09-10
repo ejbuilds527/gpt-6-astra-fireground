@@ -11,7 +11,7 @@ export default function Page() {
   // Passed as children, not imported: Surface is a client component, and these read the key on the server.
   return <SurfacePage role="command">
     <div className="grid">
-      <section className="card"><h2>The lay · nozzle to water</h2><LayMap/></section>
+      <section className="card"><h2>The lay · on the map</h2><LayMap/></section>
       <section className="card"><h2>The tanker shuttle</h2><ShuttleMap/></section>
     </div>
   </SurfacePage>;
