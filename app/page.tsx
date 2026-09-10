@@ -14,7 +14,7 @@ export default async function Home() {
         Fire<span className="text-ember-600 dark:text-ember-400">ground</span>
       </h1>
       <p className="mt-3 text-lg text-ground-400">
-        Water supply decision support for the fireground.
+        Water supply and staging decision support for the fireground.
       </p>
 
       <div className="mt-10 flex flex-wrap items-center gap-3">
