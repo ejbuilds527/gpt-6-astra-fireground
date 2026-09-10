@@ -573,7 +573,7 @@ document.getElementById('dopen').addEventListener('click',function(){tog(true)})
 document.getElementById('dclose').addEventListener('click',function(){tog(false)});
 sc.addEventListener('click',function(){tog(false)});
 
-var ALARM1="Engine seven, engine two, tanker eight. Structure fire. Two zero eight Valley Road, between Hospital Circle and Route one oh six. Silver Hill Hospital. Building not confirmed. Engine seven, engine two, tanker eight. Structure fire. Two zero eight Valley Road, between Hospital Circle and Route one oh six. Silver Hill Hospital. Building not confirmed.";
+var ALARM1="Engine seven, engine two, tanker eight, structure fire, two zero eight Valley Road between Hospital Circle and Route one oh six, Silver Hill Hospital, main house alarm sounding. Engine seven, engine two, tanker eight, structure fire, two zero eight Valley Road between Hospital Circle and Route one oh six, Silver Hill Hospital, main house alarm sounding.";
 function twoTone(){
   var C=new (window.AudioContext||window.webkitAudioContext)();
   function beep(hz,at,ms){
@@ -588,9 +588,25 @@ function twoTone(){
   beep(947,0,1.0); beep(1383,1.12,3.0);
   return 4.2;
 }
+function pickVoice(){
+  var v=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+  // a CAD console is male and mechanical. Fred is the most robotic voice macOS ships.
+  var want=["Fred","Albert","Alex","Daniel","Ralph","Junior","Google UK English Male","Microsoft David"];
+  for(var i=0;i<want.length;i++){
+    for(var j=0;j<v.length;j++){ if(v[j].name.indexOf(want[i])===0) return v[j]; }
+  }
+  for(var k=0;k<v.length;k++){ if(/male/i.test(v[k].name)&&!/female/i.test(v[k].name)) return v[k]; }
+  return null;
+}
+var VOICE=null;
+function loadVoices(){ VOICE=pickVoice(); }
+if(window.speechSynthesis){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
 function say(t){
   if(!window.speechSynthesis) return;
-  var u=new SpeechSynthesisUtterance(t); u.rate=0.86; u.pitch=0.7; u.volume=1;
+  if(!VOICE) VOICE=pickVoice();
+  var u=new SpeechSynthesisUtterance(t);
+  if(VOICE) u.voice=VOICE;
+  u.rate=0.80; u.pitch=0.45; u.volume=1;   // slow, low, flat — a machine reading a card
   speechSynthesis.cancel(); speechSynthesis.speak(u);
 }
 document.getElementById("tone").addEventListener("click",function(){
