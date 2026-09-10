@@ -184,7 +184,7 @@ svg{display:block;width:100%;height:auto;background:var(--sunk);border-radius:4p
 .maplay{position:relative;border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin-bottom:12px}
 .maplay img{width:100%;display:block}
 .maplay .ov{position:absolute;inset:0;width:100%;height:100%;background:none}
-.mk text{font-family:var(--mono);font-size:12px;font-weight:700;fill:var(--ink)}
+.mk text{font-family:var(--mono);font-size:12px;font-weight:700;fill:var(--ink);paint-order:stroke fill;stroke:#14171c;stroke-width:4.5px;stroke-linejoin:round}
 .mk .mkS{font-size:10px;font-weight:400;fill:var(--ink3)}
 .mk path{stroke-width:1}
 .gl{width:30px;height:20px;display:block}
@@ -203,7 +203,7 @@ svg{display:block;width:100%;height:auto;background:var(--sunk);border-radius:4p
 .blocky svg{width:270px;height:auto;background:none}
 .stopb{background:var(--sunk);border:2px solid var(--rule2);color:var(--ink2);border-radius:4px;
   padding:14px 18px;font:700 12px var(--body);letter-spacing:.1em;cursor:pointer}
-.len{font-family:var(--mono);font-size:13px;font-weight:700;fill:#EF8200}
+.len{font-family:var(--mono);font-size:13px;font-weight:700;fill:#EF8200;paint-order:stroke fill;stroke:#14171c;stroke-width:4.5px;stroke-linejoin:round}
 .relay{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-top:4px}
 .rn,.rp{border:2px solid var(--rule2);border-radius:5px;padding:9px 11px;text-align:center;min-width:72px}
 .rn{border-color:var(--accent)} .rp{border-color:var(--orange)}
@@ -237,7 +237,7 @@ svg{display:block;width:100%;height:auto;background:var(--sunk);border-radius:4p
 .dch{font-size:12px;padding:8px 10px;border-radius:3px;margin-bottom:6px;line-height:1.45}
 .dch.block{background:rgba(200,85,61,.13);border:1px solid var(--red);color:#e8a091}
 .dch.q{background:var(--sunk);border:1px solid var(--rule2);color:var(--ink2)}
-.tm{font-family:var(--mono);font-size:12px;font-weight:700;fill:#EF8200}
+.tm{font-family:var(--mono);font-size:12px;font-weight:700;fill:#EF8200;paint-order:stroke fill;stroke:#14171c;stroke-width:4.5px;stroke-linejoin:round}
 .alarm{margin-top:11px;background:rgba(200,85,61,.12);border:1px solid var(--red);color:#e8a091;
   border-radius:4px;padding:9px 12px;font-size:12.5px;line-height:1.45}
 .laypair{display:flex;gap:12px;align-items:flex-end;margin-top:4px}
@@ -333,10 +333,10 @@ details[open].card summary::after{content:"  \2212"}
             <text x="219" y="196" text-anchor="end">DROP</text>
             <text x="219" y="210" text-anchor="end" class="mkS" style="fill:#e08a78">CROSS HERE</text>
             <text x="219" y="223" text-anchor="end" class="mkS">road already closed</text>
-            <text x="449" y="505" style="fill:#e08a78;font-size:13px">DUMP</text>
-            <text x="449" y="519" class="mkS">end of the line &middot; on Silvermine</text>
-            <text x="449" y="532" class="mkS" style="fill:#5aabb3">106 TURN OPEN &middot; mutual aid stages here</text>
-            <text x="305" y="316" text-anchor="middle" style="fill:#EF8200;font-size:13px">RELAY PUMP</text><text x="305" y="329" text-anchor="middle" class="mkS">boosts the line</text>
+            <text x="419" y="505" text-anchor="end" style="fill:#e08a78;font-size:13px">DUMP</text>
+            <text x="419" y="519" text-anchor="end" class="mkS">end of the line</text>
+            <text x="419" y="532" text-anchor="end" class="mkS" style="fill:#5aabb3">106 TURN OPEN</text>
+            <text x="279" y="316" text-anchor="end" style="fill:#EF8200;font-size:13px">RELAY PUMP</text><text x="279" y="329" text-anchor="end" class="mkS">boosts the line</text>
           </g>
         </svg>
       </div>
@@ -530,12 +530,29 @@ details[open].card summary::after{content:"  \2212"}
   <div class="grid">
     <div class="card">
       <h2>Where to stage &middot; Norwalk</h2>
-      <div class="answer">
-        <div class="answer-side">106</div>
-        <div class="answer-why">
-          <div class="answer-why-1">stage on Route 106</div>
-          <div class="answer-why-2">you arrive SSE &middot; 5.0 mi</div>
-        </div>
+      <div class="maplay">
+        <img src="staging-map.png" alt="Mutual aid staging on Route 106, with Valley Rd closed">
+        <svg viewBox="0 0 560 470" class="ov">
+          <path d="M421.8 420.2 L420.8 417.4 L419.7 413.9 L419.0 409.7 L417.1 389.6 L416.1 384.0 L414.2 379.4 L410.9 373.9 L408.0 370.1 L404.5 365.9 L402.0 362.3 L399.6 358.3 L396.2 352.1 L393.5 346.4 L389.1 333.6 L385.4 324.1 L383.2 316.2 L381.8 309.6 L380.6 303.7 L378.4 295.0 L377.7 292.9 L377.1 293.2 L375.7 293.8 L367.1 296.7 L354.9 300.5 L349.5 302.0 L347.3 302.2 L345.9 302.3 L345.5 302.6 L345.1 302.9 L343.9 301.4 L342.6 299.1 L341.0 296.1 L339.0 292.4 L334.9 284.8 L329.2 274.0 L327.1 268.9 L325.8 266.3 L323.3 261.2 L319.7 255.6 L312.7 247.1 L309.3 242.1 L306.0 237.8 L302.3 233.8 L295.8 228.0 L292.4 224.3 L289.5 219.7 L287.5 216.6 L284.8 213.6 L279.7 208.7 L272.6 202.3 L261.4 193.7 L254.1 188.4 L250.3 186.6 L247.5 185.3 L233.2 179.8 L223.2 174.5 L205.0 164.4 L196.6 158.6 L189.5 153.1" stroke="#5aabb3" stroke-width="5" fill="none" stroke-linejoin="round"/>
+          <g transform="translate(343.9,301.4) rotate(-118.9)">
+            <path d="M-11 -9 L13 0 L-11 9 Z" fill="#5aabb3"/></g>
+          <g stroke="#c8553d" stroke-width="5">
+            <path d="M125 65 L151 91"/>
+            <path d="M151 65 L125 91"/></g>
+          <circle cx="140.8" cy="49.8" r="8" fill="#c8553d" stroke="#1c1f25" stroke-width="3"/>
+          <circle cx="254.1" cy="188.4" r="11" fill="#5aabb3" stroke="#1c1f25" stroke-width="3"/>
+          <circle cx="189.5" cy="153.1" r="6" fill="#e6ebef" stroke="#1c1f25" stroke-width="2"/>
+          <g class="mk">
+            <text x="154" y="47" style="fill:#e08a78">THE FIRE</text>
+            <text x="156" y="74" style="fill:#e08a78">VALLEY RD CLOSED</text>
+            <text x="156" y="88" class="mkS">do not enter</text>
+            <text x="270" y="186" style="fill:#5aabb3">STAGE HERE</text>
+            <text x="270" y="201" class="mkS">CT-106 &middot; all mutual aid</text>
+            <text x="179" y="157" text-anchor="end" class="mkS">106 junction</text>
+            <text x="14" y="24" style="fill:#5aabb3">NORWALK IN &middot; SSE 5.0 mi</text>
+            <text x="14" y="42" class="mkS">106 stays open &mdash; it is how the tankers work</text>
+          </g>
+        </svg>
       </div>
       <div class="say"><span class="say-k">SAY THIS</span>
         Norwalk staging on Route one oh six at Silvermine.
