@@ -13,3 +13,8 @@ export function publicRedirect(location: string, headers: Headers) {
   // An absolute SDK Location can itself contain 0.0.0.0, so keep only its path/query.
   return new URL(parsed.pathname + parsed.search + parsed.hash, origin);
 }
+
+export function sameOrigin(request: Request) {
+  const origin = request.headers.get('origin');
+  return !!origin && origin === publicOrigin(request.headers);
+}
