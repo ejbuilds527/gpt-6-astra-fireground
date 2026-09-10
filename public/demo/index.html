@@ -590,13 +590,18 @@ function twoTone(){
 }
 function pickVoice(){
   var v=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
-  // a CAD console is male and mechanical. Fred is the most robotic voice macOS ships.
-  var want=["Fred","Albert","Alex","Daniel","Ralph","Junior","Google UK English Male","Microsoft David"];
+  var en=v.filter(function(x){return /^en(-|_|$)/i.test(x.lang||"");});
+  var pool=en.length?en:v;
+  // NEVER the novelty voices — Fred, Albert, Ralph, Junior, Bad News and friends read as a toy.
+  var banned=/fred|albert|ralph|junior|bahh|bells|boing|bubbles|cellos|deranged|good news|bad news|jester|organ|superstar|trinoids|whisper|wobble|zarvox/i;
+  pool=pool.filter(function(x){return !banned.test(x.name);});
+  // a real person reading a card: enhanced or premium first, then the best natural male voices.
+  var want=[/\(Enhanced\)/i,/\(Premium\)/i,/^Google US English$/i,/^Alex$/i,/^Evan/i,/^Nathan/i,
+            /^Aaron/i,/^Tom$/i,/^Daniel$/i,/^Microsoft (Guy|Davis|Andrew|David)/i,/^Samantha$/i];
   for(var i=0;i<want.length;i++){
-    for(var j=0;j<v.length;j++){ if(v[j].name.indexOf(want[i])===0) return v[j]; }
+    for(var j=0;j<pool.length;j++){ if(want[i].test(pool[j].name)) return pool[j]; }
   }
-  for(var k=0;k<v.length;k++){ if(/male/i.test(v[k].name)&&!/female/i.test(v[k].name)) return v[k]; }
-  return null;
+  return pool[0]||null;
 }
 var VOICE=null;
 function loadVoices(){ VOICE=pickVoice(); }
@@ -606,7 +611,7 @@ function say(t){
   if(!VOICE) VOICE=pickVoice();
   var u=new SpeechSynthesisUtterance(t);
   if(VOICE) u.voice=VOICE;
-  u.rate=0.80; u.pitch=0.45; u.volume=1;   // slow, low, flat — a machine reading a card
+  u.rate=0.94; u.pitch=1.0; u.volume=1;   // a person reading steadily. No pitch manipulation.
   speechSynthesis.cancel(); speechSynthesis.speak(u);
 }
 document.getElementById("tone").addEventListener("click",function(){
