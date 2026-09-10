@@ -46,8 +46,8 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
         <section className="fg-panel">
           <h2>The tanker shuttle</h2>
           <ShuttleMap
-            loaded={R.shuttleLoaded ?? []}
-            empty={R.shuttleEmpty ?? []}
+            loaded={R.loaded ?? []}
+            empty={R.empty ?? []}
             dump={DUMP_SITE}
             fill={FILL_HYDRANT}
             loadedMin={0.9}
