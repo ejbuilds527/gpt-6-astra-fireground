@@ -14,7 +14,7 @@ export default async function Home() {
         Fire<span className="text-ember-600 dark:text-ember-400">ground</span>
       </h1>
       <p className="mt-3 text-lg text-ground-400">
-        Water supply decision support for the fireground. Decision support, not command.
+        Water supply decision support for the fireground.
       </p>
 
       <div className="mt-10 flex flex-wrap items-center gap-3">
@@ -39,7 +39,11 @@ export default async function Home() {
       </div>
 
       <footer className="mt-16 border-t border-ground-200 pt-4 font-[family-name:var(--font-mono)] text-xs text-ground-400 dark:border-ground-700">
-        Built at the OpenAI GPT-6 Astra Hackathon.
+        Built at the{' '}
+        <a href="https://cerebralvalley.ai/e/openai-gpt-6-astra-nyc/details" className="underline underline-offset-4">
+          OpenAI GPT-6 Astra Hackathon
+        </a>
+        {' '}· Cerebral Valley · NYC.
       </footer>
     </main>
   );

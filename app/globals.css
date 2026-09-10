@@ -43,3 +43,20 @@ body {
     color: var(--color-ground-50);
   }
 }
+
+/* Architectural illustration: brand teal on paper, with neutral base linework. */
+.fireground-plan {
+  --plan-paper: #F0F8FB;
+  --plan-ink: #2F2E30;
+  --plan-accent: #266D74;
+  color: var(--plan-ink);
+  background: var(--plan-paper);
+}
+
+@media (prefers-color-scheme: dark) {
+  .fireground-plan {
+    --plan-paper: #1c1f25;
+    --plan-ink: #CED7DA;
+    --plan-accent: #5aabb3;
+  }
+}
