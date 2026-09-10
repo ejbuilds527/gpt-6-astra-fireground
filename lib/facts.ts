@@ -112,25 +112,24 @@ const staffed = app.units.filter((u: Document) => u.staffed_first_alarm === true
   F('F.RT.dump.where', dump.where ?? null, '', 'routes/dump-site.where');
   F('F.RT.dump.out_min', dump.shuttle_out_min ?? null, 'min', 'routes/dump-site.shuttle_out_min; separately routed');
   F('F.RT.dump.back_min', dump.shuttle_back_min ?? null, 'min', 'routes/dump-site.shuttle_back_min; separately routed');
+  F('F.RT.dump.correction', dump.CORRECTION_2 ?? null, '', 'routes/dump-site.CORRECTION_2; supersedes any single dump point');
+  F('F.RT.dump.segment_start', dump.segment_start ?? null, '', 'routes/dump-site.segment_start');
+  F('F.RT.dump.segment_end', dump.segment_end ?? null, '', 'routes/dump-site.segment_end');
+  F('F.RT.dump.segment_ft', dump.segment_ft ?? null, 'ft', 'routes/dump-site.segment_ft');
+  F('F.RT.dump.crossing_note', dump.THE_CROSSING_IS_NOW_FREE ?? null, '', 'routes/dump-site.THE_CROSSING_IS_NOW_FREE; bears directly on R5 and R6');
   F('F.RT.dump.not_surveyed', dump.not_surveyed ?? null, '', 'routes/dump-site.not_surveyed');
   F('F.POL.turnout_seconds', pol.turnout_benchmark_seconds ?? null, 's', 'settings/policy.turnout_benchmark_seconds');
   // The street the drive connects to. R4 and R5 are decided against this line and its direction.
   F('F.SITE.street_polyline', STREET, 'lat,lon pairs', 'Google Directions, Valley Rd from the drive entry to the dump site. THIS IS THE LINE THE STREET LEFT AND RIGHT ARE DEFINED AGAINST.');
   F('F.SITE.street_direction', 'the Valley Rd drop -> the dump site', '', 'left and right on the street are taken looking along this direction');
+  // Code cannot honestly reduce this geometry to one street side. Measured 2026-09-10: the drive
+  // vertices fall RIGHT of F.SITE.street_polyline for 35-128 m and LEFT for 44-116 m, because that
+  // polyline BEGINS at the drive junction rather than running past it. A side stated from it would
+  // be a guess wearing the word COMPUTED. R11 applies: the pick is refused until a side is measured.
   const street = points(STREET);
-  const side = (label: string, lat: unknown, lon: unknown) => {
-    if (street.length < 2 || typeof lat !== 'number' || typeof lon !== 'number') return null;
-    const measured = nearestSegment({ lat, lon }, street);
-    return `${measured.side} of travel, ${measured.offset_m.toFixed(0)} m off the ${label}`;
-  };
-  const driveSide = side('Valley Rd centreline', DRIVE[0][0], DRIVE[0][1]);
-  F('F.SITE.drive_side_of_street', driveSide ? driveSide.split(' ')[0] : null, '', driveSide
-    ? `COMPUTED: cross product of the drive entry against F.SITE.street_polyline, travelling entry -> dump. ${driveSide}. This is the side the driveway connects to.`
-    : 'NOT COMPUTED: the drive entry or the street polyline is absent.');
-  const dumpSide = side('Valley Rd centreline', dump.lat, dump.lon);
-  F('F.RT.dump_side_of_street', dumpSide ? dumpSide.split(' ')[0] : null, '', dumpSide
-    ? `COMPUTED: cross product of routes/dump-site lat,lon against F.SITE.street_polyline, travelling entry -> dump. ${dumpSide}.`
-    : 'NOT COMPUTED: routes/dump-site carries no lat,lon.');
+  const straddle = DRIVE.map(([lat, lon]) => nearestSegment({ lat, lon }, street))
+    .filter(m => m.offset_m > 30 && m.offset_m < 130);
+  F('F.SITE.drive_side_of_street', null, '', `NOT MEASURED. Cross products of the drive vertices against F.SITE.street_polyline split ${straddle.filter(m => m.side === 'RIGHT').length} RIGHT and ${straddle.filter(m => m.side === 'LEFT').length} LEFT, because that polyline begins at the junction instead of running past it. A single side needs a department walk-through or a Valley Rd centreline that spans the frontage.`);
   F('F.SITE.drive_lay_side_options', ['LEFT', 'RIGHT'], '', 'the two sides of the private drive');
   F('F.RT.street_lay_side_options', ['LEFT', 'RIGHT'], '', 'the two sides of Valley Rd');
   F('F.OPS.hose_od_charged', 5.0, 'in', '5 in LDH, charged outside diameter');
