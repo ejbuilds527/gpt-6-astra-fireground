@@ -11,19 +11,21 @@ permissions:
   contents: read
   id-token: write
 
+# Deploys to CLOUD RUN, not Firebase Hosting.
+#
+# next.config.mjs sets output:'standalone', because AuthKit exchanges the auth
+# code server-side and seals the session into an encrypted cookie. A static
+# export has no server to do either.
+#
+# And Firebase Hosting forwards exactly ONE cookie to a backend -- `__session`
+# -- stripping every other. AuthKit needs two: the session cookie and a PKCE
+# cookie. Behind Firebase the callback fails with `missing_pkce_cookie` every
+# time. Measured 2026-09-10.
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-
-      - run: npm ci
-      - run: npm run build        # next build with output:'export' -> ./out
 
       # Keyless. The organisation disables service account key creation, so this
       # is the only path -- there is no key in this repository and none may exist.
@@ -33,7 +35,23 @@ jobs:
           workload_identity_provider: projects/105260816952/locations/global/workloadIdentityPools/github/providers/github-oidc
           service_account: fireground-deployer@meerkatops-fireground.iam.gserviceaccount.com
 
-      - name: Deploy to Firebase Hosting
-        run: npx --yes firebase-tools@latest deploy --only hosting --project meerkatops-fireground --non-interactive
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # Cloud Build compiles the container from source. Secrets are referenced
+      # from Secret Manager by name and never appear in this file or in a log.
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy astra-fd \
+            --source . \
+            --region us-east1 \
+            --project meerkatops-fireground \
+            --allow-unauthenticated \
+            --port 8080 \
+            --set-secrets "WORKOS_API_KEY=workos-api-key:latest,WORKOS_CLIENT_ID=workos-client-id:latest,WORKOS_COOKIE_PASSWORD=workos-cookie-password:latest" \
+            --set-env-vars "WORKOS_REDIRECT_URI=${{ vars.WORKOS_REDIRECT_URI || 'https://astra-fd-wtd6z6dysa-ue.a.run.app/callback' }}" \
+            --quiet
+
+      - name: Report the serving URL
+        run: |
+          gcloud run services describe astra-fd --region us-east1 \
+            --project meerkatops-fireground --format='value(status.url)'
