@@ -201,6 +201,8 @@ svg{display:block;width:100%;height:auto;background:var(--sunk);border-radius:4p
   border-left:2px solid var(--rule2);padding-left:12px;min-height:34px}
 .blocky{display:flex;justify-content:center;margin:12px 0 4px}
 .blocky svg{width:270px;height:auto;background:none}
+.stopb{background:var(--sunk);border:2px solid var(--rule2);color:var(--ink2);border-radius:4px;
+  padding:14px 18px;font:700 12px var(--body);letter-spacing:.1em;cursor:pointer}
 .alarm{margin-top:11px;background:rgba(200,85,61,.12);border:1px solid var(--red);color:#e8a091;
   border-radius:4px;padding:9px 12px;font-size:12.5px;line-height:1.45}
 .laypair{display:flex;gap:12px;align-items:flex-end;margin-top:4px}
@@ -226,6 +228,7 @@ details[open].card summary::after{content:"  \2212"}
 <section class="view on" id="cmd">
   <div class="dispatch">
     <button class="tone" id="tone">SOUND THE TONE</button>
+    <button class="stopb" id="stopb">STOP</button>
     <div class="clockbox"><div class="cv" id="cv">80</div><div class="ck">SECONDS &middot; NFPA 1710 TURNOUT</div></div>
     <div class="cad" id="cad">standing by</div>
   </div>
@@ -574,64 +577,72 @@ document.getElementById('dclose').addEventListener('click',function(){tog(false)
 sc.addEventListener('click',function(){tog(false)});
 
 var ALARM1="Engine seven, engine two, tanker eight, structure fire, two zero eight Valley Road between Hospital Circle and Route one oh six, Silver Hill Hospital, main house alarm sounding. Engine seven, engine two, tanker eight, structure fire, two zero eight Valley Road between Hospital Circle and Route one oh six, Silver Hill Hospital, main house alarm sounding.";
+var CTX=null, TIMERS=[], IV=null;
+function ctx(){ if(!CTX||CTX.state==="closed"){ CTX=new (window.AudioContext||window.webkitAudioContext)(); } return CTX; }
+
+// A CAD alert bell. Struck metal is a fundamental plus inharmonic partials with
+// exponential decay — that decay is what makes it read as a bell and not a beep.
+function bell(f0, at, dur, gain){
+  var C=ctx(), t=C.currentTime+at;
+  var parts=[[1,1],[2.0,0.5],[2.98,0.32],[4.1,0.18],[5.4,0.10]];
+  parts.forEach(function(p){
+    var o=C.createOscillator(), g=C.createGain();
+    o.type="sine"; o.frequency.value=f0*p[0];
+    o.connect(g); g.connect(C.destination);
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(gain*p[1],t+0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.start(t); o.stop(t+dur+0.05);
+  });
+}
+function beep(hz,at,ms,gain){
+  var C=ctx(), t=C.currentTime+at;
+  var o=C.createOscillator(), g=C.createGain();
+  o.type="sine"; o.frequency.value=hz; o.connect(g); g.connect(C.destination);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(gain,t+0.02);
+  g.gain.setValueAtTime(gain,t+ms/1000-0.03);
+  g.gain.linearRampToValueAtTime(0,t+ms/1000);
+  o.start(t); o.stop(t+ms/1000+0.02);
+}
 function twoTone(){
-  var C=new (window.AudioContext||window.webkitAudioContext)();
-  function beep(hz,at,ms){
-    var o=C.createOscillator(),g=C.createGain();
-    o.type="sine"; o.frequency.value=hz; o.connect(g); g.connect(C.destination);
-    g.gain.setValueAtTime(0,C.currentTime+at);
-    g.gain.linearRampToValueAtTime(0.28,C.currentTime+at+0.02);
-    g.gain.setValueAtTime(0.28,C.currentTime+at+ms/1000-0.03);
-    g.gain.linearRampToValueAtTime(0,C.currentTime+at+ms/1000);
-    o.start(C.currentTime+at); o.stop(C.currentTime+at+ms/1000+0.02);
-  }
-  beep(947,0,1.0); beep(1383,1.12,3.0);
-  return 4.2;
+  // the pre-alert: a two-note bell, the ding a CAD console opens with
+  bell(880, 0.00, 1.5, 0.30);
+  bell(659, 0.42, 1.8, 0.30);
+  // then the Quick Call two-tone page
+  beep(947, 2.30, 1000, 0.22);
+  beep(1383, 3.42, 3000, 0.22);
+  return 6.6;
 }
-function pickVoice(){
-  var v=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
-  var en=v.filter(function(x){return /^en(-|_|$)/i.test(x.lang||"");});
-  var pool=en.length?en:v;
-  // NEVER the novelty voices — Fred, Albert, Ralph, Junior, Bad News and friends read as a toy.
-  var banned=/fred|albert|ralph|junior|bahh|bells|boing|bubbles|cellos|deranged|good news|bad news|jester|organ|superstar|trinoids|whisper|wobble|zarvox/i;
-  pool=pool.filter(function(x){return !banned.test(x.name);});
-  // a real person reading a card: enhanced or premium first, then the best natural male voices.
-  var want=[/\(Enhanced\)/i,/\(Premium\)/i,/^Google US English$/i,/^Alex$/i,/^Evan/i,/^Nathan/i,
-            /^Aaron/i,/^Tom$/i,/^Daniel$/i,/^Microsoft (Guy|Davis|Andrew|David)/i,/^Samantha$/i];
-  for(var i=0;i<want.length;i++){
-    for(var j=0;j<pool.length;j++){ if(want[i].test(pool[j].name)) return pool[j]; }
-  }
-  return pool[0]||null;
+function stopAll(){
+  TIMERS.forEach(clearTimeout); TIMERS=[];
+  if(IV){ clearInterval(IV); IV=null; }
+  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+  try{ if(CTX && CTX.state!=="closed"){ CTX.close(); CTX=null; } }catch(e){}
+  var b=document.getElementById("tone");
+  b.classList.remove("live"); b.textContent="SOUND THE TONE";
+  var cv=document.getElementById("cv");
+  cv.className="cv"; cv.textContent="80";
+  document.getElementById("cad").textContent="standing by";
 }
-var VOICE=null;
-function loadVoices(){ VOICE=pickVoice(); }
-if(window.speechSynthesis){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
-function say(t){
-  if(!window.speechSynthesis) return;
-  if(!VOICE) VOICE=pickVoice();
-  var u=new SpeechSynthesisUtterance(t);
-  if(VOICE) u.voice=VOICE;
-  u.rate=0.94; u.pitch=1.0; u.volume=1;   // a person reading steadily. No pitch manipulation.
-  speechSynthesis.cancel(); speechSynthesis.speak(u);
-}
+document.getElementById("stopb").addEventListener("click",stopAll);
 document.getElementById("tone").addEventListener("click",function(){
+  stopAll();
   var b=this, cv=document.getElementById("cv"), cad=document.getElementById("cad");
   b.classList.add("live"); b.textContent="TONE OUT";
-  // THE CLOCK STARTS FIRST AND UNCONDITIONALLY. Audio is a bonus, never a dependency.
   var t0=Date.now();
   cv.className="cv run";
-  var iv=setInterval(function(){
+  IV=setInterval(function(){
     var el=(Date.now()-t0)/1000, left=80-el;
     if(left>0){ cv.textContent=Math.ceil(left); }
     else { cv.textContent="+"+Math.floor(-left); cv.className="cv over"; }
-    if(el>150){ clearInterval(iv); b.classList.remove("live"); b.textContent="SOUND THE TONE"; }
   },100);
-  var d=4.2;
-  try { cad.textContent="\u2022 \u2022 \u2022"; d=twoTone(); } catch(e){ cad.textContent="(tone unavailable)"; }
-  setTimeout(function(){
+  var d=6.6;
+  try { cad.textContent="\u25CF \u25CF \u25CF"; d=twoTone(); } catch(e){ cad.textContent="(tone unavailable)"; }
+  TIMERS.push(setTimeout(function(){
     cad.textContent=ALARM1;
     try { say(ALARM1); } catch(e){}
-  }, d*1000);
+  }, d*1000));
 });
 </script>
 </div></body></html>
