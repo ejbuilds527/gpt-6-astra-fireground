@@ -48,7 +48,7 @@ jobs:
             --allow-unauthenticated \
             --port 8080 \
             --set-secrets "WORKOS_API_KEY=workos-api-key:latest,WORKOS_CLIENT_ID=workos-client-id:latest,WORKOS_COOKIE_PASSWORD=workos-cookie-password:latest" \
-            --set-env-vars "WORKOS_REDIRECT_URI=${{ vars.WORKOS_REDIRECT_URI || 'https://astra-fd-wtd6z6dysa-ue.a.run.app/callback' }}" \
+            --set-env-vars "WORKOS_REDIRECT_URI=${{ vars.WORKOS_REDIRECT_URI || 'https://fireground.meerkatops.app/callback' }}" \
             --quiet
 
       - name: Report the serving URL
