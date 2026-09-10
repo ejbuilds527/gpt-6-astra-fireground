@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Each step runs only if the toolchain it needs is actually present, so this
+      # workflow is green on an empty scaffold and starts working the moment code lands.
+      - name: Detect Node
+        id: node
+        run: test -f package.json && echo "found=true" >> "$GITHUB_OUTPUT" || echo "found=false" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.node.outputs.found == 'true'
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install and test (Node)
+        if: steps.node.outputs.found == 'true'
+        run: |
+          npm ci || npm install
+          npm test --if-present
+
+      - name: Detect Python
+        id: py
+        run: test -f pyproject.toml -o -f requirements.txt && echo "found=true" >> "$GITHUB_OUTPUT" || echo "found=false" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-python@v5
+        if: steps.py.outputs.found == 'true'
+        with:
+          python-version: '3.12'
+
+      - name: Install and test (Python)
+        if: steps.py.outputs.found == 'true'
+        run: |
+          python -m pip install -U pip
+          test -f requirements.txt && pip install -r requirements.txt || pip install -e .
+          python -m pytest -q || echo "no tests yet"

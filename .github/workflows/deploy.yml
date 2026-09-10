@@ -1,0 +1,39 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# REQUIRED for Workload Identity Federation. Without id-token: write the OIDC
+# token is never minted and the auth step fails without saying why.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build        # next build with output:'export' -> ./out
+
+      # Keyless. The organisation disables service account key creation, so this
+      # is the only path -- there is no key in this repository and none may exist.
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/105260816952/locations/global/workloadIdentityPools/github/providers/github-oidc
+          service_account: fireground-deployer@meerkatops-fireground.iam.gserviceaccount.com
+
+      - name: Deploy to Firebase Hosting
+        run: npx --yes firebase-tools@latest deploy --only hosting --project meerkatops-fireground --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
