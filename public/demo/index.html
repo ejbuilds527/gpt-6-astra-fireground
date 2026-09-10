@@ -400,10 +400,10 @@ details[open].card summary::after{content:"  \2212"}
       <div class="card" style="margin-bottom:14px">
         <h2>The shuttle</h2>
         <div class="two">
-          <div><div class="tv" id="tk">5</div><div class="tk">TANKERS</div></div>
+          <div><div class="tv tv-count" id="tk">5</div><div class="tk">TANKERS</div></div>
           <div><div class="tv">16.5</div><div class="tk">MIN LOOP</div></div>
         </div>
-        <div class="tsub"><span id="tkline">757 gpm delivered &middot; 680 needed &middot; hydrant busy 88%</span></div>
+        <div class="tsub"><span class="tk-line" id="tkline">757 gpm delivered &middot; 680 needed &middot; hydrant busy 88%</span></div>
         <div class="trade">One-way loop, 4.27 mi &mdash; Silvermine, Heather, Weeburn,
         Snowberry, Buttery, Carter.<br>
         <b>Tap a hose line and the tanker count moves.</b></div>
@@ -484,10 +484,10 @@ details[open].card summary::after{content:"  \2212"}
       <div class="card" style="margin-bottom:14px">
         <h2>Turnaround</h2>
         <div class="two">
-          <div><div class="tv" id="tk">5</div><div class="tk">TANKERS</div></div>
+          <div><div class="tv tv-count" id="tk">5</div><div class="tk">TANKERS</div></div>
           <div><div class="tv">16.5</div><div class="tk">MIN LOOP</div></div>
         </div>
-        <div class="tsub"><span id="tkline">757 gpm delivered &middot; 680 needed &middot; five tankers</span></div>
+        <div class="tsub"><span class="tk-line" id="tkline">757 gpm delivered &middot; 680 needed &middot; five tankers</span></div>
       </div>
       <div class="card">
         <h2>The cycle &middot; every row from a rate</h2>
@@ -873,15 +873,15 @@ document.querySelectorAll('.ln').forEach(function(b){
     // THE POINT: demand drives the tanker count. 2,500 gal over a 16.52 min loop
     // is 151 gpm per tanker, and hydrant 1-18 caps the whole operation at 856 gpm.
     var PER=2500/16.52, CAP=855.87;
-    var tk=document.getElementById('tk'), line=document.getElementById('tkline');
-    if(g===0){ tk.textContent='0'; tk.className='tv';
-      line.innerHTML='no lines flowing'; return; }
+    var tks=document.querySelectorAll('#tk,.tv-count'), lines=document.querySelectorAll('#tkline,.tk-line');
+    if(g===0){ tks.forEach(function(e){e.textContent='0';e.className='tv tv-count';});
+      lines.forEach(function(e){e.innerHTML='no lines flowing';}); return; }
     var n=Math.ceil(g/PER), del=n*PER;
     var busy=(2500/CAP)/16.52*n*100;
-    tk.textContent=n;
-    tk.className='tv'+(busy>100?' bad':'');
-    line.innerHTML=del.toFixed(0)+' gpm delivered &middot; '+g+' needed &middot; hydrant busy '
-      +busy.toFixed(0)+'%'+(busy>100?' &mdash; <b>1-18 CANNOT KEEP UP</b>':'');
+    tks.forEach(function(e){e.textContent=n;e.className='tv tv-count'+(busy>100?' bad':'');});
+    var txt=del.toFixed(0)+' gpm delivered \u00b7 '+g+' needed \u00b7 hydrant busy '+busy.toFixed(0)+'%'
+      +(busy>100?' \u2014 <b>1-18 CANNOT KEEP UP</b>':'');
+    lines.forEach(function(e){e.innerHTML=txt;});
   });
 });
 </script>
