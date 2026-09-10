@@ -1,5 +1,4 @@
 import { withAuth } from '@workos-inc/authkit-nextjs';
-import Link from 'next/link';
 import { Mark } from '@/components/Mark';
 
 // The public landing page. A signed-out visitor sees the pitch and a sign-in button.
@@ -20,12 +19,14 @@ export default async function Home() {
       <div className="mt-10 flex flex-wrap items-center gap-3">
         {user ? (
           <>
-            <Link
+            {/* A plain anchor, not a next/link component. That component navigates via RSC,
+                and the AuthKit SDK stores the PKCE verifier only on a document request. */}
+            <a
               href="/app"
               className="rounded-md bg-ember-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-ember-700"
             >
               Open Astra-FD
-            </Link>
+            </a>
             <span className="text-sm text-ground-400">signed in as {user.email}</span>
           </>
         ) : (
