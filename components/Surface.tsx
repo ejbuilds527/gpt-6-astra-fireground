@@ -6,6 +6,14 @@ type Data = Record<string, any>;
 export const number = (v: unknown, digits = 1): string => typeof v === 'number' && Number.isFinite(v)
   ? v.toLocaleString(undefined, { maximumFractionDigits: digits }) : typeof v === 'string' && v ? v : 'UNKNOWN';
 const value = (call?: Data): Data => call?.output?.value && typeof call.output.value === 'object' ? call.output.value : {};
+// The five stages /api/decide emits, and who runs each one. Two of them are models, and they differ.
+const DECISION_STAGES = [
+  { n: 1, name: 'ASSEMBLE', by: 'code', what: 'fact pack from Firestore and the tools' },
+  { n: 2, name: 'PROPOSE', by: 'gpt-6-astra', what: 'reads the imagery, proposes the supply plan' },
+  { n: 3, name: 'CHECK', by: 'code', what: 'deterministic checks accept or reject' },
+  { n: 4, name: 'CHALLENGE', by: 'gpt-5.6-sol', what: 'challenges the proposal from a clean context' },
+  { n: 5, name: 'PRESENT', by: 'code', what: 'the answer command reads' },
+];
 export function Card({ title, children }: { title: string; children: ReactNode }) {
   return <section className="card"><h2>{title}</h2>{children}</section>;
 }
@@ -29,6 +37,8 @@ export function Surface({ role, identity, initial }: { role: Role; identity: Sur
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<Data | null>(null);
   const [asking, setAsking] = useState(false);
+  const [astra, setAstra] = useState<Data[]>([]);
+  const [astraRunning, setAstraRunning] = useState(false);
   const traceButton = useRef<HTMLButtonElement>(null);
   const traceClose = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -50,11 +60,20 @@ export function Surface({ role, identity, initial }: { role: Role; identity: Sur
     connect(); document.addEventListener('visibilitychange', connect);
     return () => { events?.close(); document.removeEventListener('visibilitychange', connect); };
   }, [role]);
+  // A turnout clock counts the window down from the tone, then shows the overrun.
+  // It holds at four windows, so a page left open reads as a finished turnout and not as an uptime counter.
+  const windowSeconds = Number(data?.window_seconds) > 0 ? Number(data?.window_seconds) : 80;
+  const holdMs = windowSeconds * 4000;
   useEffect(() => {
     if (role !== 'command' || !data?.tone_at) return;
-    setNow(Date.now()); const timer = setInterval(() => setNow(Date.now()), 250);
+    const tone = data.tone_at as number;
+    setNow(Date.now());
+    const timer = setInterval(() => {
+      const reading = Date.now(); setNow(reading);
+      if (reading - tone >= holdMs) clearInterval(timer);
+    }, 250);
     return () => clearInterval(timer);
-  }, [role, data?.tone_at]);
+  }, [role, data?.tone_at, holdMs]);
   useEffect(() => {
     if (!trace) return;
     traceClose.current?.focus();
@@ -71,6 +90,27 @@ export function Surface({ role, identity, initial }: { role: Role; identity: Sur
     } catch (e) { setError(e instanceof Error ? e.message : 'Command was not saved.'); }
     finally { setPending(false); }
   }
+  // /api/decide answers with one JSON object per line, so each stage is drawn the moment it lands.
+  async function runDecide() {
+    setAstra([]); setAstraRunning(true);
+    try {
+      const response = await fetch('/api/decide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      if (!response.ok || !response.body) { setError('The decision run did not start (' + response.status + ').'); return; }
+      const reader = response.body.getReader(), decoder = new TextDecoder();
+      let buffer = '';
+      for (;;) {
+        const { done, value: chunk } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(chunk, { stream: true });
+        const lines = buffer.split('\n'); buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try { const stage = JSON.parse(line); setAstra(stages => [...stages, stage]); } catch {}
+        }
+      }
+    } catch { setError('The decision run was interrupted before it finished.'); }
+    finally { setAstraRunning(false); }
+  }
   async function ask(e: React.FormEvent) {
     e.preventDefault(); if (asking) return;
     setAsking(true); setAnswer(null); setError('');
@@ -80,7 +120,11 @@ export function Surface({ role, identity, initial }: { role: Role; identity: Sur
     } catch { setError('Astra answer unavailable. Imagery and lay interpretation remain ungraded; measured supply information is still shown.'); }
     finally { setAsking(false); }
   }
-  const elapsed = data?.tone_at && now ? Math.max(0, Math.floor((now - data.tone_at) / 1000)) : null;
+  const sinceTone = data?.tone_at && now ? Math.max(0, now - data.tone_at) : null;
+  const held = sinceTone !== null && sinceTone >= holdMs;
+  const elapsed = sinceTone === null ? null : Math.floor(Math.min(sinceTone, holdMs) / 1000);
+  const remaining = elapsed === null ? null : windowSeconds - elapsed;
+  const over = remaining !== null && remaining < 0;
   const demand = value(data?.demand), relay = value(data?.relay);
   return <main className="wrap">
     <h1>Fireground · {identity.display}</h1>
@@ -90,8 +134,24 @@ export function Surface({ role, identity, initial }: { role: Role; identity: Sur
     {!data ? <div className="view on"><Card title="Incident inputs unavailable"><p>The live connection is retrying. No values have been assumed.</p></Card></div> : <div className="view on">
       <div className="sub">{data.scenario?.dispatch} · {data.scenario?.confidence}</div>
       {role === 'command' && <>
-        <div className="addrbar"><button className="go" disabled={pending} onClick={() => command({ action: 'tone' })}>TONE / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
-        <div className="clock"><div className={elapsed !== null && elapsed > data.window_seconds ? 'warn' : ''}><div className="dim">TURNOUT</div><div className="big">{elapsed ?? '—'}<span className="unit">s of {number(data.window_seconds)}</span></div></div><div style={{ flex: 1 }}><Stages stages={data.stages}/></div></div>
+        <div className="addrbar"><button className="go" disabled={pending || astraRunning} onClick={async () => { await command({ action: 'tone' }); runDecide(); }}>TONE / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
+        <div className="clock"><div className={over ? 'warn' : ''}><div className="dim">TURNOUT{held ? ' · HELD' : ''}</div><div className="big">{elapsed === null ? '—' : over ? '+' + number(-remaining, 0) : number(remaining, 0)}<span className="unit">{elapsed === null ? `s · ${windowSeconds} s on the tone` : over ? `s over ${windowSeconds}` : `s left of ${windowSeconds}`}</span></div></div><div style={{ flex: 1 }}><Stages stages={data.stages}/></div></div>
+        <section className="card fg-astra">
+          <h2>Astra · the decision run<span className={'runflag ' + (astraRunning ? 'on' : '')}>{astraRunning ? 'RUNNING' : astra.length ? 'COMPLETE' : 'NOT RUN'}</span></h2>
+          <p className="hint">Two models, and they are not the same model. gpt-6-astra proposes. gpt-5.6-sol challenges the proposal from a clean context. Code assembles, checks and presents.</p>
+          <ol className="fg-stages">{DECISION_STAGES.map(plan => {
+            const landed = astra.find(stage => stage.name === plan.name);
+            const running = astraRunning && !landed && astra.length + 1 >= plan.n;
+            const model = plan.by !== 'code';
+            return <li key={plan.n} className={landed ? 'done' : running ? 'active' : 'waiting'}>
+              <span className="fg-n">{plan.n}</span>
+              <span className="fg-name">{plan.name}<span className="fg-what">{plan.what}</span></span>
+              <span className={'fg-by ' + (model ? 'model' : '')}>{String(landed?.by || plan.by)}</span>
+              <span className="fg-ms">{landed ? number(landed.elapsedMs, 0) + ' ms' : running ? 'RUNNING' : 'WAITING'}</span>
+            </li>;
+          })}</ol>
+          {astra.length > 0 && <pre className="fg-json">{JSON.stringify(astra[astra.length - 1]?.payload ?? {}, null, 1).slice(0, 1600)}</pre>}
+        </section>
         <div className="stack">
           <Card title="Supply mode"><div className="modes">{['SHUTTLE', 'RELAY', 'BOTH'].map(option => <button key={option} className={'md ' + (data.selected_option === option ? 'on' : '')} aria-pressed={data.selected_option === option} disabled={pending} onClick={() => command({ action: 'select', option })}>{option}<b>{option === 'SHUTTLE' ? number(value(data.shuttle).sustained_gpm) + ' gpm' : option === 'RELAY' ? data.inventory?.first_alarm?.verdict : 'combined supply'}</b></button>)}</div><p className="hint">Command’s selection: {data.selected_option || 'NOT SELECTED'}. Hydraulic feasibility remains {relay.hydraulic_verdict || 'ungraded'}.</p></Card>
           <div className="grid"><div className="stack">

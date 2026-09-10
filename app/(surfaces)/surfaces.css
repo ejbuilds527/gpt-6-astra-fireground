@@ -207,3 +207,32 @@ details[open].card summary::after{content:"  \2212"}
 .surface-root .grid{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}
 .surface-root .card{overflow-wrap:anywhere}
 @media(max-width:860px){.surface-root .grid{grid-template-columns:minmax(0,1fr)}}
+
+/* The decision run: five stages, and the two model stages must read as models. */
+.surface-root .clock .big{font-variant-numeric:tabular-nums}
+.surface-root .fg-astra{border-color:var(--rule2)}
+.surface-root .fg-astra h2{display:flex;align-items:center;gap:10px}
+.surface-root .runflag{font-family:var(--mono);font-size:10px;letter-spacing:.12em;padding:2px 7px;
+  border:1px solid var(--rule2);border-radius:3px;color:var(--ink3)}
+.surface-root .runflag.on{color:var(--orange);border-color:var(--orange);animation:fg-pulse 1.2s ease-in-out infinite}
+@keyframes fg-pulse{50%{opacity:.4}}
+.surface-root .fg-stages{list-style:none;margin:11px 0 0;padding:0;display:grid;gap:1px;
+  background:var(--rule);border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.surface-root .fg-stages li{display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;gap:12px;
+  align-items:baseline;background:var(--panel);padding:9px 12px;font-size:12.5px}
+.surface-root .fg-stages li.waiting{color:var(--ink3)}
+.surface-root .fg-stages li.waiting .fg-by{color:var(--ink3)}
+.surface-root .fg-stages li.active{background:var(--sunk)}
+.surface-root .fg-n{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.surface-root .fg-name{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase}
+.surface-root .fg-what{display:block;font-size:11px;letter-spacing:0;text-transform:none;color:var(--ink3);margin-top:2px}
+.surface-root .fg-by{font-family:var(--mono);font-size:11px;color:var(--ink2)}
+.surface-root .fg-by.model{color:var(--orange)}
+.surface-root .fg-ms{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:11.5px;
+  color:var(--ink2);text-align:right;min-width:68px}
+.surface-root .fg-stages li.waiting .fg-ms{color:var(--ink3)}
+.surface-root .fg-json{background:var(--sunk);border:1px solid var(--rule);border-radius:4px;padding:10px 12px;
+  margin-top:12px;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:11px;line-height:1.55;
+  color:var(--ink2);max-height:270px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:600px){.surface-root .fg-stages li{grid-template-columns:20px minmax(0,1fr);gap:4px 10px}
+  .surface-root .fg-ms,.surface-root .fg-by{grid-column:2;text-align:left;min-width:0}}

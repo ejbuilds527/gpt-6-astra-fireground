@@ -29,7 +29,12 @@ export function Incident({role,identity,initial}:{role:Role;identity:RecordData;
   connect();document.addEventListener('visibilitychange',connect);
   return()=>{events?.close();document.removeEventListener('visibilitychange',connect);};
  },[role]);
- useEffect(()=>{if(!data?.tone_at)return;const tick=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(tick);},[data?.tone_at]);
+ // The clock counts the window down from the tone, shows the overrun, then holds at four windows.
+ const windowSeconds=Number(data?.window_seconds)>0?Number(data?.window_seconds):80;
+ const holdMs=windowSeconds*4000;
+ useEffect(()=>{if(!data?.tone_at)return;const tone=data.tone_at as number;
+  const tick=setInterval(()=>{const reading=Date.now();setNow(reading);if(reading-tone>=holdMs)clearInterval(tick);},1000);
+  return()=>clearInterval(tick);},[data?.tone_at,holdMs]);
  const [astra,setAstra]=useState<RecordData[]>([]);
  const [astraRunning,setAstraRunning]=useState(false);
  async function runDecide(){
@@ -59,14 +64,18 @@ export function Incident({role,identity,initial}:{role:Role;identity:RecordData;
   try{const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,scenario_id:data?.scenario.id,selected_option:data?.selected_option})});const out=await r.json();if(!r.ok)throw new Error(out.error||'Astra unavailable');setAnswer(out);}
   catch(e){setError(e instanceof Error?e.message:'Astra unavailable');}finally{setPending(false);}
  }
- const elapsed=data?.tone_at?Math.max(0,Math.floor((now-data.tone_at)/1000)):0;
+ const sinceTone=data?.tone_at?Math.max(0,now-data.tone_at):null;
+ const held=sinceTone!==null&&sinceTone>=holdMs;
+ const elapsed=sinceTone===null?null:Math.floor(Math.min(sinceTone,holdMs)/1000);
+ const remaining=elapsed===null?null:windowSeconds-elapsed;
+ const over=remaining!==null&&remaining<0;
  return <main className="fg-console">
   <header className="fg-header"><div><p className="fg-eyebrow">FIREGROUND / {role.toUpperCase()} / TRAINING</p><h1>{identity.display}</h1><p>{identity.station} · Arrival {identity.bearing} · {identity.distance} mi straight line</p></div><div className="fg-nav">{role==='command'&&<Link href="/settings">Settings</Link>}<a href="/signin">Sign in another role</a></div></header>
   {error&&<p role="alert" className="fg-error">{error}</p>}
   {!data?<section><h2>Incident inputs unavailable</h2><p>Live connection is retrying. No supply values have been assumed.</p></section>:<>
    <div className="fg-dispatch"><span>{data.scenario.dispatch}</span><strong>{data.scenario.confidence}</strong></div>
    {role==='command'&&<>
-    <section className="fg-toolbar"><div><p className="fg-eyebrow">TURNOUT WINDOW</p><strong className={'fg-number '+(elapsed>data.window_seconds?'fg-caution':'')}>{data.tone_at?elapsed:'—'} <small>/ {data.window_seconds} s</small></strong></div><div className="fg-actions"><button disabled={pending} onClick={async()=>{await command({action:'tone'});runDecide();}}>Tone / reset incident</button><button disabled={pending||data.scenario.id==='lodge-confirmed'} onClick={()=>command({action:'confirm'})}>Confirm the Lodge, Michael’s House</button></div></section>
+    <section className="fg-toolbar"><div><p className="fg-eyebrow">TURNOUT WINDOW{held?' · HELD':''}</p><strong className={'fg-number '+(over?'fg-caution':'')}>{elapsed===null?'—':over?'+'+(-remaining):remaining} <small>{elapsed===null?`s · ${windowSeconds} s on the tone`:over?`s over ${windowSeconds}`:`s left of ${windowSeconds}`}</small></strong></div><div className="fg-actions"><button disabled={pending} onClick={async()=>{await command({action:'tone'});runDecide();}}>Tone / reset incident</button><button disabled={pending||data.scenario.id==='lodge-confirmed'} onClick={()=>command({action:'confirm'})}>Confirm the Lodge, Michael’s House</button></div></section>
     <section><h2>Attack lines · tap to change</h2><div className="fg-lines">{data.attack_lines.map((line:RecordData)=><button key={line.id} className={data.line_ids.includes(line.id)?'selected':''} aria-pressed={data.line_ids.includes(line.id)} disabled={pending} onClick={()=>command({action:'lines',ids:data.line_ids.includes(line.id)?data.line_ids.filter((id:string)=>id!==line.id):[...data.line_ids,line.id]})}>{line.label}<strong>{line.gpm} gpm</strong><small>{line.detail}</small></button>)}</div></section>
     <div className="fg-grid"><section><p className="fg-eyebrow">ATTACK DEMAND</p><h2 className="fg-number">{display(data.demand.output.value?.gpm)} <small>gpm</small></h2><p>Tank-only duration <b>{display(data.demand.output.value?.tank_seconds)} s</b></p></section><section><p className="fg-eyebrow">FIRST-ALARM RELAY HOSE</p><h2 className="fg-caution">{data.inventory.first_alarm.verdict}</h2><p>{display(data.inventory.first_alarm.known_ft)} ft {data.inventory.first_alarm.is_floor?'known floor':'recorded'} / {display(data.inventory.first_alarm.needed_ft)} ft required</p><p>{data.inventory.first_alarm.staffing_unknown?'First-alarm staffing NOT SET':data.inventory.first_alarm.short_by_ft?display(data.inventory.first_alarm.short_by_ft)+' ft short':'Known hose covers the route'}</p><p>{data.inventory.all.missing.join(', ')}{data.inventory.all.missing.length?' hose NOT SET':''}</p></section></div>
     <section><h2>Hydrants · ranked for {data.scenario.confidence}</h2><div className="fg-table-wrap"><table><thead><tr><th>Source</th><th>Distance*</th><th>Tested flow</th><th>Margin</th><th>Status</th><th>Flow test</th></tr></thead><tbody>{data.hydrants.map((h:RecordData)=>{const v=h.source.output.value;return <tr key={h.id}><th>{h.id}<small>{v.ownership}</small></th><td>{display(h.distance_ft)} ft</td><td>{display(v.gpm,2)} gpm</td><td>{display(v.margin_gpm,2)} gpm</td><td className="fg-caution">{v.verdict}{v.simulated&&<small>SIMULATED RED TAG</small>}</td><td>{v.last_flow_test}<small>{display(v.flow_test_age_days)} days old{v.stale===true?' · STALE':''}</small></td></tr>;})}</tbody></table></div><p className="fg-note">*Precomputed point-to-point distances. These are not surveyed hose lays. Untested capacities remain unknown.</p></section>
