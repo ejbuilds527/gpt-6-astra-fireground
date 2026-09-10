@@ -605,13 +605,12 @@ function beep(hz,at,ms,gain){
   o.start(t); o.stop(t+ms/1000+0.02);
 }
 function twoTone(){
-  // the pre-alert: a two-note bell, the ding a CAD console opens with
-  bell(880, 0.00, 1.5, 0.30);
-  bell(659, 0.42, 1.8, 0.30);
-  // then the Quick Call two-tone page
-  beep(947, 2.30, 1000, 0.22);
-  beep(1383, 3.42, 3000, 0.22);
-  return 6.6;
+  // a long steady tone, then three short beeps to draw the room's attention
+  beep(1000, 0.00, 2200, 0.24);
+  beep(1300, 2.45, 170, 0.26);
+  beep(1300, 2.75, 170, 0.26);
+  beep(1300, 3.05, 170, 0.26);
+  return 3.9;
 }
 function stopAll(){
   TIMERS.forEach(clearTimeout); TIMERS=[];
@@ -636,7 +635,7 @@ document.getElementById("tone").addEventListener("click",function(){
     if(left>0){ cv.textContent=Math.ceil(left); }
     else { cv.textContent="+"+Math.floor(-left); cv.className="cv over"; }
   },100);
-  var d=6.6;
+  var d=3.9;
   try { cad.textContent="\u25CF \u25CF \u25CF"; d=twoTone(); } catch(e){ cad.textContent="(tone unavailable)"; }
   TIMERS.push(setTimeout(function(){
     cad.textContent=ALARM1;
