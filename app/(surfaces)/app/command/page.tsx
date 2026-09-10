@@ -12,7 +12,7 @@ export default function Page() {
   return <SurfacePage role="command">
     <div className="grid">
       <section className="card"><h2>The lay · on the map</h2><LayMap/></section>
-      <section className="card"><h2>The tanker shuttle</h2><ShuttleMap/></section>
+      <section className="card"><h2>The tanker shuttle</h2><ShuttleMap loadedMin={0.9} emptyMin={0.8}/></section>
     </div>
   </SurfacePage>;
 }
