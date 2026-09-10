@@ -8,13 +8,11 @@ export const dynamic = "force-dynamic";
  * app/app/[role]/page.tsx also mounts them, but a static segment beats a
  * dynamic one in the app router, so that file never renders for this URL. */
 export default function Page() {
-  return <>
-    <SurfacePage role="command"/>
-    <main className="wrap">
-      <div className="grid">
-        <section className="card"><h2>The lay · nozzle to water</h2><LayMap/></section>
-        <section className="card"><h2>The tanker shuttle</h2><ShuttleMap/></section>
-      </div>
-    </main>
-  </>;
+  // Passed as children, not imported: Surface is a client component, and these read the key on the server.
+  return <SurfacePage role="command">
+    <div className="grid">
+      <section className="card"><h2>The lay · nozzle to water</h2><LayMap/></section>
+      <section className="card"><h2>The tanker shuttle</h2><ShuttleMap/></section>
+    </div>
+  </SurfacePage>;
 }

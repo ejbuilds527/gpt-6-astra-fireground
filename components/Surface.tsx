@@ -27,7 +27,9 @@ function Calculation({ call }: { call?: Data }) {
   return <details><summary>Calculation and assumptions</summary><pre>{JSON.stringify(call?.output ?? { why: 'Inputs unavailable' }, null, 2)}</pre></details>;
 }
 
-export function Surface({ role, identity, initial }: { role: Role; identity: SurfaceIdentity; initial: Data | null }) {
+// children carries server-rendered nodes the page passes in — the maps, which read MAPS_API_KEY
+// on the server and cannot be imported into a client component.
+export function Surface({ role, identity, initial, children }: { role: Role; identity: SurfaceIdentity; initial: Data | null; children?: ReactNode }) {
   const [data, setData] = useState(initial);
   const [error, setError] = useState('');
   const [live, setLive] = useState(false);
@@ -154,6 +156,7 @@ export function Surface({ role, identity, initial }: { role: Role; identity: Sur
         </section>
         <div className="stack">
           <Card title="Supply mode"><div className="modes">{['SHUTTLE', 'RELAY', 'BOTH'].map(option => <button key={option} className={'md ' + (data.selected_option === option ? 'on' : '')} aria-pressed={data.selected_option === option} disabled={pending} onClick={() => command({ action: 'select', option })}>{option}<b>{option === 'SHUTTLE' ? number(value(data.shuttle).sustained_gpm) + ' gpm' : option === 'RELAY' ? data.inventory?.first_alarm?.verdict : 'combined supply'}</b></button>)}</div><p className="hint">Command’s selection: {data.selected_option || 'NOT SELECTED'}. Hydraulic feasibility remains {relay.hydraulic_verdict || 'ungraded'}.</p></Card>
+          {children}
           <div className="grid"><div className="stack">
             <Card title="The lay · nozzle to water"><div className="answer"><span className="answer-side">UNGRADED</span><div className="answer-why-2">{data.model_status}</div></div><p>Driveway path and lay side await imagery interpretation. Hydrant ranking and supply calculations are available below.</p><Rows rows={[["Hose available · ft", data.inventory?.first_alarm?.known_ft], ['Route requires · ft', data.inventory?.first_alarm?.needed_ft], ['Hose short · ft', data.inventory?.first_alarm?.short_by_ft], ['Relay segments', relay.segments], ['Intermediate pumpers', relay.intermediate_relays]]}/><p className="warn">{data.inventory?.first_alarm?.verdict}{data.inventory?.first_alarm?.staffing_unknown ? ' · Staffing NOT SET' : ''}</p><Calculation call={data.relay}/></Card>
             <Card title="Hydrants · ranked for the incident"><div className="scroll"><table><thead><tr><th>ID</th><th className="r">ft</th><th className="r">gpm</th><th>Status / flow test</th></tr></thead><tbody>{(data.hydrants || []).map((h: Data) => { const s = value(h.source); return <tr key={h.id}><td>{h.id}</td><td className="r">{number(h.distance_ft)}</td><td className="r">{number(s.gpm)}</td><td><span className={/red|unavailable/i.test(s.verdict || '') ? 'bad' : 'warn'}>{s.verdict || 'UNKNOWN'}</span>{s.simulated && <div className="warn">SIMULATED RED TAG</div>}<div className="hint">{s.last_flow_test || 'Test date unknown'} · {number(s.flow_test_age_days)} days {s.stale ? '· STALE' : ''}</div></td></tr>; })}</tbody></table></div><p className="hint">Precomputed point-to-point distances; not surveyed hose lays. Missing flow tests remain unknown.</p></Card>
