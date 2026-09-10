@@ -65,4 +65,4 @@ export default async function proxy(request: NextRequest, event: NextFetchEvent)
   }
   return response;
 }
-export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt).*)'] };
+export const config = { matcher: ['/((?!demo|_next/static|_next/image|favicon.ico|robots.txt).*)'] };
