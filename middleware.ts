@@ -17,7 +17,7 @@ import { authkitMiddleware } from '@workos-inc/authkit-nextjs';
 // Firebase Hosting cannot front an auth flow. The static landing page can live
 // there; the authenticated app cannot.
 export default authkitMiddleware({
-  redirectUri: 'https://astra-fd-wtd6z6dysa-ue.a.run.app/callback',
+  redirectUri: 'https://fireground.meerkatops.app/callback',
   middlewareAuth: {
     enabled: true,
     unauthenticatedPaths: ['/', '/callback'],

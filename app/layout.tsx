@@ -26,11 +26,11 @@ const dmMono = DM_Mono({
 export const metadata: Metadata = {
   title: { default: 'Fireground', template: '%s | Fireground' },
   description: 'Built at the OpenAI GPT-6 Astra Hackathon.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fireground.xyz'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fireground.meerkatops.app'),
   openGraph: {
     title: 'Fireground',
     description: 'Built at the OpenAI GPT-6 Astra Hackathon.',
-    url: 'https://fireground.xyz',
+    url: 'https://fireground.meerkatops.app',
     siteName: 'Fireground',
     type: 'website',
   },
