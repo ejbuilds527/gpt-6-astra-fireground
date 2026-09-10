@@ -18,7 +18,7 @@ export type TurnoutClockProps = {
   size?: number;
 };
 
-const INK = '#e6ebef', MUTED = '#6e7a85', ORANGE = '#EF8200', RED = '#c8553d', LINE = 'rgba(140,193,210,.14)';
+const MUTED = '#6e7a85', ORANGE = '#EF8200', RED = '#c8553d', LINE = 'rgba(140,193,210,.14)';
 const MONO = 'var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)';
 const TICK_MS = 100;
 
