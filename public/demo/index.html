@@ -204,6 +204,14 @@ svg{display:block;width:100%;height:auto;background:var(--sunk);border-radius:4p
 .stopb{background:var(--sunk);border:2px solid var(--rule2);color:var(--ink2);border-radius:4px;
   padding:14px 18px;font:700 12px var(--body);letter-spacing:.1em;cursor:pointer}
 .len{font-family:var(--mono);font-size:13px;font-weight:700;fill:#EF8200}
+.relay{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-top:4px}
+.rn,.rp{border:2px solid var(--rule2);border-radius:5px;padding:9px 11px;text-align:center;min-width:72px}
+.rn{border-color:var(--accent)} .rp{border-color:var(--orange)}
+.rn b,.rp b{display:block;font-family:var(--mono);font-size:15px;font-weight:700}
+.rn b{color:var(--accent)} .rp b{color:var(--orange)}
+.rn span,.rp span{font-size:9px;color:var(--ink3);letter-spacing:.06em}
+.rh{flex:1;min-width:56px;text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;
+  color:var(--ink2);border-top:3px solid #EF8200;padding-top:5px;margin:0 2px}
 .alarm{margin-top:11px;background:rgba(200,85,61,.12);border:1px solid var(--red);color:#e8a091;
   border-radius:4px;padding:9px 12px;font-size:12.5px;line-height:1.45}
 .laypair{display:flex;gap:12px;align-items:flex-end;margin-top:4px}
@@ -232,6 +240,7 @@ details[open].card summary::after{content:"  \2212"}
     <button class="stopb" id="stopb">STOP</button>
     <div class="clockbox"><div class="cv" id="cv">80</div><div class="ck">SECONDS &middot; NFPA 1710 TURNOUT</div></div>
     <div class="cad" id="cad">standing by</div>
+    <audio id="dispatchAudio" src="dispatch.m4a" preload="auto"></audio>
   </div>
 
   <div class="addrbar">
@@ -434,25 +443,53 @@ details[open].card summary::after{content:"  \2212"}
         <h2>Turnaround</h2>
         <div class="two">
           <div><div class="tv">4</div><div class="tk">TANKERS</div></div>
-          <div><div class="tv">12.9</div><div class="tk">MIN LOOP</div></div>
+          <div><div class="tv">13.3</div><div class="tk">MIN LOOP</div></div>
         </div>
-        <div class="tsub">777 gpm delivered &middot; 680 needed &middot; margin +97</div>
+        <div class="tsub">753 gpm delivered &middot; 680 needed &middot; margin +73</div>
       </div>
       <div class="card">
-        <h2>The cycle</h2>
+        <h2>The cycle &middot; every row from a rate</h2>
         <table>
-          <tr><th>leg</th><th class="r">min</th></tr>
-          <tr><td>dump &rarr; Silvermine &rarr; fill</td><td class="r">2.0</td></tr>
-          <tr><td>fill at 1-18</td><td class="r">2.5</td></tr>
-          <tr><td>fill &rarr; Heather &rarr; Carter</td><td class="r">3.0</td></tr>
-          <tr><td>Carter &rarr; Silvermine &rarr; dump</td><td class="r">1.7</td></tr>
-          <tr><td>dump into the pond</td><td class="r">1.7</td></tr>
-          <tr><td>manoeuvre, both ends</td><td class="r">2.0</td></tr>
+          <tr><th>leg</th><th class="r">min</th><th class="dim">from</th></tr>
+          <tr><td>travel, the whole loop</td><td class="r">6.70</td><td class="dim">routed, 2.99 mi</td></tr>
+          <tr><td>fill at 1-18</td><td class="r">2.92</td><td class="dim">2,500 &divide; 856 gpm</td></tr>
+          <tr><td>dump into the pond</td><td class="r">1.67</td><td class="dim">2,500 &divide; 1,500 gpm</td></tr>
+          <tr><td>manoeuvre, both ends</td><td class="r">2.00</td><td class="dim">60 s each</td></tr>
+          <tr><td><b>LOOP</b></td><td class="r"><b>13.29</b></td><td class="dim">the sum</td></tr>
         </table>
-        <div class="alarm" style="margin-top:9px">3 TANKERS IS 583 gpm &middot; SHORT OF 680</div>
+        <div class="tsub">one tanker = 2,500 &divide; 13.29 = <b>188 gpm</b></div>
+        <table style="margin-top:10px">
+          <tr><th>tankers</th><th class="r">gpm</th><th class="r">hydrant busy</th></tr>
+          <tr><td>3</td><td class="r bad">564</td><td class="r">66%</td></tr>
+          <tr><td><b>4</b></td><td class="r ok"><b>753</b></td><td class="r">88%</td></tr>
+          <tr><td>5</td><td class="r dim">941</td><td class="r bad">110% &mdash; impossible</td></tr>
+        </table>
+        <div class="alarm" style="margin-top:9px">THE HYDRANT IS THE CEILING &middot; 856 gpm.
+        No number of tankers beats it.</div>
       </div>
     </div>
   </div>
+      <div class="card" style="margin-top:14px">
+        <h2>The relay &middot; hose either side of each pump</h2>
+        <div class="relay">
+          <div class="rn"><b>1-18</b><span>source<br>856 gpm</span></div>
+          <div class="rh">1,188 ft</div>
+          <div class="rp"><b>E2</b><span>RELAY 1</span></div>
+          <div class="rh">1,188 ft</div>
+          <div class="rp"><b>STAM</b><span>RELAY 2</span></div>
+          <div class="rh">1,188 ft</div>
+          <div class="rp"><b>E4</b><span>RELAY 3</span></div>
+          <div class="rh">1,188 ft</div>
+          <div class="rn"><b>E7</b><span>attack<br>680 gpm</span></div>
+        </div>
+        <table style="margin-top:11px">
+          <tr><td>pull, routed</td><td class="r">4,754 ft</td></tr>
+          <tr><td>hose needed, rounded to sections</td><td class="r">4,800 ft</td></tr>
+          <tr><td>friction at 680 gpm</td><td class="r">3.70 psi / 100 ft</td></tr>
+          <tr><td>per segment</td><td class="r">44 psi</td></tr>
+          <tr><td>max segment at 120 psi available</td><td class="r ok">3,244 ft</td></tr>
+        </table>
+      </div>
 </section>
 
 <!-- ================= STAGING ================= -->
@@ -648,9 +685,38 @@ function say(text){
     },250));
   },1200));
 }
+// ---- THE RECORDED DISPATCH ----------------------------------------------
+// A real file beats a delayed speechSynthesis call: the same voice on every
+// machine, and Chrome's speech queue cannot drop it. say() stays as the
+// fallback and runs only when play() rejects, so a 404 is never silent.
+function playDispatch(){
+  var a=document.getElementById("dispatchAudio");
+  if(!a){ vlog("no #dispatchAudio element, falling back to say()"); sayFallback("element missing"); return; }
+  a.onplay=function(){ vlog("audio onplay fired, src="+a.currentSrc); };
+  a.onended=function(){ vlog("audio onended fired"); };
+  a.onerror=function(){
+    var c=(a.error&&a.error.code)||"?";
+    vlog("audio onerror code="+c);
+    sayFallback("audio error code "+c);
+  };
+  try{ a.pause(); a.currentTime=0; }catch(e){}
+  var p;
+  try{ p=a.play(); }
+  catch(e){ vlog("play() threw "+e.message); sayFallback("play threw "+e.message); return; }
+  if(p && typeof p.then==="function"){
+    p.then(function(){ vlog("play() resolved"); })
+     .catch(function(e){ vlog("play() rejected: "+(e&&e.name)+" "+(e&&e.message)); sayFallback("play rejected "+(e&&e.name)); });
+  }
+}
+function sayFallback(why){
+  vlog("FALLBACK to speechSynthesis because "+why);
+  try { say(ALARM1); } catch(e){ vlog("say() threw "+e.message); voiceFallback(e.message); }
+}
 function stopAll(){
   TIMERS.forEach(clearTimeout); TIMERS=[];
   if(IV){ clearInterval(IV); IV=null; }
+  var da=document.getElementById("dispatchAudio");
+  if(da){ try{ da.pause(); da.currentTime=0; }catch(e){} }
   if(RESUME){ clearInterval(RESUME); RESUME=null; }
   UTTERS=[];
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
@@ -690,9 +756,7 @@ document.getElementById("tone").addEventListener("click",function(){
 
   var d=3.9;
   try { d=twoTone(); } catch(e){}
-  TIMERS.push(setTimeout(function(){
-    try { say(ALARM1); } catch(e){ vlog("say() threw "+e.message); voiceFallback(e.message); }
-  }, d*1000));
+  TIMERS.push(setTimeout(playDispatch, d*1000));
 });
 document.querySelectorAll('.tab').forEach(function(t){
   t.addEventListener('click',function(){
