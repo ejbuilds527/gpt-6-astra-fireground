@@ -47,7 +47,7 @@ jobs:
             --project meerkatops-fireground \
             --allow-unauthenticated \
             --port 8080 \
-            --set-secrets "WORKOS_API_KEY=workos-api-key:latest,WORKOS_CLIENT_ID=workos-client-id:latest,WORKOS_COOKIE_PASSWORD=workos-cookie-password:latest,OPENAI_API_KEY=openai-api-key:latest" \
+            --set-secrets "WORKOS_API_KEY=workos-api-key:latest,WORKOS_CLIENT_ID=workos-client-id:latest,WORKOS_COOKIE_PASSWORD=workos-cookie-password:latest,OPENAI_API_KEY=openai-api-key:latest,MAPS_API_KEY=maps-api-key:latest" \
             --set-env-vars "WORKOS_REDIRECT_URI=${{ vars.WORKOS_REDIRECT_URI || 'https://fireground.meerkatops.app/callback' }},OPENAI_PROJECT=proj_4GXlBQT0XWnsEMhsHGHrYNcM" \
             --quiet
 
