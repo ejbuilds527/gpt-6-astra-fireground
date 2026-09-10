@@ -30,6 +30,25 @@ export function Incident({role,identity,initial}:{role:Role;identity:RecordData;
   return()=>{events?.close();document.removeEventListener('visibilitychange',connect);};
  },[role]);
  useEffect(()=>{if(!data?.tone_at)return;const tick=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(tick);},[data?.tone_at]);
+ const [astra,setAstra]=useState<RecordData[]>([]);
+ const [astraRunning,setAstraRunning]=useState(false);
+ async function runDecide(){
+  setAstra([]);setAstraRunning(true);
+  try{
+   const r=await fetch('/api/decide',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   if(!r.ok||!r.body){setError('Astra unavailable ('+r.status+')');setAstraRunning(false);return;}
+   const reader=r.body.getReader(),dec=new TextDecoder();let buf='';
+   for(;;){
+    const {done,value}=await reader.read(); if(done)break;
+    buf+=dec.decode(value,{stream:true});
+    const lines=buf.split('\n'); buf=lines.pop()||'';
+    for(const ln of lines){ if(!ln.trim())continue;
+      try{ const o=JSON.parse(ln); setAstra(a=>[...a,o]); }catch{}
+    }
+   }
+  }catch(e){setError(e instanceof Error?e.message:'Astra unavailable');}
+  finally{setAstraRunning(false);}
+ }
  async function command(payload:RecordData){
   setPending(true);setError('');
   try{const r=await fetch('/api/roles/command/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const out=await r.json();if(!r.ok)throw new Error(out.error);}
@@ -47,13 +66,21 @@ export function Incident({role,identity,initial}:{role:Role;identity:RecordData;
   {!data?<section><h2>Incident inputs unavailable</h2><p>Live connection is retrying. No supply values have been assumed.</p></section>:<>
    <div className="fg-dispatch"><span>{data.scenario.dispatch}</span><strong>{data.scenario.confidence}</strong></div>
    {role==='command'&&<>
-    <section className="fg-toolbar"><div><p className="fg-eyebrow">TURNOUT WINDOW</p><strong className={'fg-number '+(elapsed>data.window_seconds?'fg-caution':'')}>{data.tone_at?elapsed:'—'} <small>/ {data.window_seconds} s</small></strong></div><div className="fg-actions"><button disabled={pending} onClick={()=>command({action:'tone'})}>Tone / reset incident</button><button disabled={pending||data.scenario.id==='lodge-confirmed'} onClick={()=>command({action:'confirm'})}>Confirm the Lodge, Michael’s House</button></div></section>
+    <section className="fg-toolbar"><div><p className="fg-eyebrow">TURNOUT WINDOW</p><strong className={'fg-number '+(elapsed>data.window_seconds?'fg-caution':'')}>{data.tone_at?elapsed:'—'} <small>/ {data.window_seconds} s</small></strong></div><div className="fg-actions"><button disabled={pending} onClick={async()=>{await command({action:'tone'});runDecide();}}>Tone / reset incident</button><button disabled={pending||data.scenario.id==='lodge-confirmed'} onClick={()=>command({action:'confirm'})}>Confirm the Lodge, Michael’s House</button></div></section>
     <section><h2>Attack lines · tap to change</h2><div className="fg-lines">{data.attack_lines.map((line:RecordData)=><button key={line.id} className={data.line_ids.includes(line.id)?'selected':''} aria-pressed={data.line_ids.includes(line.id)} disabled={pending} onClick={()=>command({action:'lines',ids:data.line_ids.includes(line.id)?data.line_ids.filter((id:string)=>id!==line.id):[...data.line_ids,line.id]})}>{line.label}<strong>{line.gpm} gpm</strong><small>{line.detail}</small></button>)}</div></section>
     <div className="fg-grid"><section><p className="fg-eyebrow">ATTACK DEMAND</p><h2 className="fg-number">{display(data.demand.output.value?.gpm)} <small>gpm</small></h2><p>Tank-only duration <b>{display(data.demand.output.value?.tank_seconds)} s</b></p></section><section><p className="fg-eyebrow">FIRST-ALARM RELAY HOSE</p><h2 className="fg-caution">{data.inventory.first_alarm.verdict}</h2><p>{display(data.inventory.first_alarm.known_ft)} ft {data.inventory.first_alarm.is_floor?'known floor':'recorded'} / {display(data.inventory.first_alarm.needed_ft)} ft required</p><p>{data.inventory.first_alarm.staffing_unknown?'First-alarm staffing NOT SET':data.inventory.first_alarm.short_by_ft?display(data.inventory.first_alarm.short_by_ft)+' ft short':'Known hose covers the route'}</p><p>{data.inventory.all.missing.join(', ')}{data.inventory.all.missing.length?' hose NOT SET':''}</p></section></div>
     <section><h2>Hydrants · ranked for {data.scenario.confidence}</h2><div className="fg-table-wrap"><table><thead><tr><th>Source</th><th>Distance*</th><th>Tested flow</th><th>Margin</th><th>Status</th><th>Flow test</th></tr></thead><tbody>{data.hydrants.map((h:RecordData)=>{const v=h.source.output.value;return <tr key={h.id}><th>{h.id}<small>{v.ownership}</small></th><td>{display(h.distance_ft)} ft</td><td>{display(v.gpm,2)} gpm</td><td>{display(v.margin_gpm,2)} gpm</td><td className="fg-caution">{v.verdict}{v.simulated&&<small>SIMULATED RED TAG</small>}</td><td>{v.last_flow_test}<small>{display(v.flow_test_age_days)} days old{v.stale===true?' · STALE':''}</small></td></tr>;})}</tbody></table></div><p className="fg-note">*Precomputed point-to-point distances. These are not surveyed hose lays. Untested capacities remain unknown.</p></section>
     <div className="fg-grid"><section><h2>Relay</h2><p>{display(data.relay.output.value?.segments)} segments · {display(data.relay.output.value?.intermediate_relays)} intermediate relay pumpers</p><p className="fg-caution">Pressure feasibility: {data.relay.output.value?.hydraulic_verdict || 'ungraded'}</p><details><summary>Calculations and assumptions</summary><Facts call={data.relay}/></details></section><Shuttle call={data.shuttle}/></div>
     <section><h2>Command’s supply choice</h2><p>Selected: {data.selected_option || 'NOT SELECTED'}</p><div className="fg-actions">{['SHUTTLE','RELAY','BOTH'].map(option=><button key={option} disabled={pending} onClick={()=>command({action:'select',option})}>{option}</button>)}</div></section>
     <section><h2>Mutual aid · hold the approach open</h2><p>{data.staging.principle}</p><p className="fg-caution">Staging coordinates NOT SET. Bearing groups are guidance, not a dispatch location.</p><div className="fg-actions"><button disabled={pending} onClick={()=>command({action:'hold',held:!data.hold_south})}>{data.hold_south?'Release south hold':'Hold southern approach'}</button><button disabled={pending} onClick={()=>command({action:'assign_shuttle',assigned:!data.shuttle_assigned})}>{data.shuttle_assigned?'Withdraw shuttle assignment':'Assign shuttle'}</button></div><table><thead><tr><th>Department</th><th>Arrival</th><th>State</th></tr></thead><tbody>{data.staging.departments.map((d:RecordData)=><tr key={d.code}><th>{d.department}</th><td>{d.bearing} · {d.distance} mi</td><td><select aria-label={d.department+' state'} disabled={pending} value={data.states[d.code]||'responding'} onChange={e=>command({action:'state',code:d.code,state:e.target.value})}>{data.staging.states.map((s:string)=><option key={s}>{s}</option>)}</select></td></tr>)}</tbody></table></section>
+    <section className="fg-astra"><h2>Astra · the decision run{astraRunning&&<small> RUNNING…</small>}</h2>
+     {astra.length===0?<p className="fg-caution">Not run. Press Tone to start the five stage loop: code assembles the fact pack, gpt-6-astra proposes, code checks, gpt-5.6-sol challenges from a clean context.</p>:
+      <table><thead><tr><th>Stage</th><th>By</th><th>Elapsed</th></tr></thead><tbody>
+       {astra.map((st:RecordData,i:number)=><tr key={i}><th>{String(st.stage)} · {String(st.name)}</th><td>{String(st.by)}</td><td>{display(Number(st.elapsedMs),0)} ms</td></tr>)}
+      </tbody></table>}
+     {astra.length>0&&(()=>{const last=astra[astra.length-1] as RecordData;const pl=last?.payload as RecordData|undefined;
+       return pl?<pre className="fg-json">{JSON.stringify(pl,null,1).slice(0,1400)}</pre>:null;})()}
+    </section>
     <section><h2>Measured stages</h2><table><thead><tr><th>Stage</th><th>Elapsed</th><th>Budget</th></tr></thead><tbody>{data.stages.map((s:RecordData)=><tr key={s.n}><th>{s.name}{s.precomputed&&<small>Precomputed inputs · live read / calculation</small>}</th><td className={s.measured_ms>s.target_s*1000?'fg-caution':''}>{s.measured_ms===null?'NOT RUN':display(s.measured_ms,2)+' ms'}</td><td>{s.target_s} s</td></tr>)}</tbody></table><p className="fg-caution">{data.model_status}</p></section>
     <section><h2>Ask Astra</h2><form onSubmit={ask} className="fg-actions"><input aria-label="Question for Astra" value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Why not the hydrant in front of the building?" maxLength={1000} required/><button disabled={pending}>{pending?'Working…':'Ask'}</button></form>{answer&&<><p className="fg-answer">{answer.answer}</p><p className="fg-note">{answer.model} · {answer.elapsed_ms} ms</p>{answer.tool_calls?.map((c:RecordData,i:number)=><details key={i}><summary>{c.name} · {c.ms} ms</summary><Facts call={c}/></details>)}</>}</section>
    </>}
