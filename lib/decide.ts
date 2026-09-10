@@ -98,6 +98,11 @@ export function checkProposal(proposal: GroundedProposal, facts: FactPack): Chec
   const finalOverlap = number('F.RT.stage_to_scene.overlap_pct');
   if (finalOverlap !== undefined && finalOverlap > 0) add('staging', 'BLOCK', 'Final approach from staging overlaps the shuttle route.', ['F.RT.stage_to_scene.overlap_pct']);
   if (/red.?tag|out.of.service/i.test(String(value(`F.HYD.${sourceId}.status`)))) add('fill_site','BLOCK','Chosen hydrant is red-tagged or out of service.',[`F.HYD.${sourceId}.status`]);
+  // A trace that disagrees with the record has not measured the same drive. Measured 2026-09-10:
+  // the GCS frame is zoom 18, the drive needs zoom 17, so the model traced only the visible part.
+  const traced = number('F.VISION.driveway_ft'), recorded = number('F.SITE.driveway_ft');
+  if (traced !== undefined && recorded !== undefined && recorded > 0 && Math.abs(traced - recorded) / recorded > 0.25)
+    add('lay_side_drive', 'UNGRADED', `The satellite trace measured ${Math.round(traced)} ft against a recorded ${recorded} ft. One of the two does not cover the whole drive, so the trace is not a measurement of it.`, ['F.VISION.driveway_ft', 'F.SITE.driveway_ft']);
   // R6: the drop is where two crews meet, so a crossing there is a road closure and a trip hazard.
   for (const c of proposal.crossings) {
     if (/\b(drop|handoff|hand-off|driveway entry|drive entry)\b/i.test(c.where)) add('lay_side_street', 'BLOCK', `R6: a crossing at the drop is refused. Named: ${c.where}.`, c.grounded_in);

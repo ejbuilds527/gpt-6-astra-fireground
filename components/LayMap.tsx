@@ -35,7 +35,8 @@ export type LayMapProps = MapProps & {
   /** The driveway mouth. BOTH lays start here. */
   junction?: LatLon;
   lodge?: LatLon;
-  /** Where the line is dropped. No crossing is ever drawn here. */
+  /** Where the line is dropped. No crossing is ever drawn here. Measured at the
+   * driveway mouth, so it defaults to the junction and shares that marker. */
   drop?: LatLon;
   dump?: LatLon;
   /** THE ONE CROSSING. It belongs at the dump and is refused anywhere else. */
@@ -176,9 +177,13 @@ export function LayMap({
     streetLatLon = null;
   }
 
+  // The line is dropped at the driveway mouth, so the drop and the junction are
+  // one point unless a caller measures them apart.
+  const dropPoint = drop ?? junction;
+  const dropAtJunction = distanceM(dropPoint, junction) <= 5;
   const fitPoints: LatLon[] = [
     ...(driveLatLon ?? []), ...(streetLatLon ?? []),
-    junction, lodge, dump, ...(drop ? [drop] : []),
+    junction, lodge, dump, dropPoint,
   ];
   const frame: Viewport = viewport ?? {
     center: boundsCenter(fitPoints),
@@ -251,9 +256,15 @@ export function LayMap({
           <DirectionGlyph points={drive} solid label="The drive lay runs toward the fire" />
           <DirectionGlyph points={street} solid={false} label="The street lay runs away from the fire" />
           <Marker at={lodgeAt} label="THE LODGE" note="attack pump" />
-          <Marker at={junctionAt} label="DRIVEWAY MOUTH" note="both lays start here" anchor="end" />
+          {dropAtJunction ? (
+            <Marker at={junctionAt} label="DROP" note="both lays start here · no crossing" anchor="end" />
+          ) : (
+            <>
+              <Marker at={junctionAt} label="DRIVEWAY MOUTH" note="both lays start here" anchor="end" />
+              <Marker at={project([dropPoint])[0]} label="DROP" note="no crossing here" anchor="end" />
+            </>
+          )}
           <Marker at={dumpAt} label="DUMP" note="portable pond" />
-          {drop ? <Marker at={project([drop])[0]} label="DROP" note="no crossing here" anchor="end" /> : null}
           <Legend x={16} y={frame.height - 62} />
         </>
       );

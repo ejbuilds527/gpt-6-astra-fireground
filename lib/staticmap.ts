@@ -1,3 +1,9 @@
+/** KNOWN LIMITATION, accepted 2026-09-10 for the submission deadline.
+ * A Static Maps image IS a keyed URL, so the key reaches the browser in the
+ * rendered img src even though it is read server-side and is never a prop.
+ * Closing it needs a route handler that streams the bytes. Until then the key
+ * is restricted at the Google console. */
+
 import { latLonToPixel, type LatLon, type Viewport } from './geo';
 
 /** The panel palette. The basemap is styled to these values so the overlay and
