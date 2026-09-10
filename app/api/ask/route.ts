@@ -28,7 +28,7 @@ export async function POST(request:Request){
   const state=(await db.doc('incidents/training').get()).data()||{};
   const snapshot=attackSnapshot(await readSnapshot(input.data.scenario_id||state.scenario_id||'general-alarm'),state.line_ids);
   const client=new OpenAI({apiKey:process.env.OPENAI_API_KEY,project:process.env.OPENAI_PROJECT,timeout:45000,maxRetries:0});
-  const model=process.env.OPENAI_MODEL||'gpt-5';
+  const model=process.env.OPENAI_MODEL||'gpt-6-astra';
   const items:OpenAI.Responses.ResponseInputItem[]=[{role:'user',content:input.data.question}];
   const tools=toolDefinitions.map(t=>({type:'function' as const,...t.function,strict:false}));
   for(let round=0;round<4;round++){
