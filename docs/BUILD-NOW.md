@@ -90,6 +90,18 @@ for caution and CTA ONLY. No fire-red. Status is colour on the word. Numbers are
 
 Mockup: the published design canvas. Match it.
 
+## PHASES E AND F — OWNER RULINGS, AND THEY ARE NOT OPTIONAL
+
+    E.1  the 80 second turnout clock, visible, with per-stage measured times
+    E.2  THREE surfaces — command, staging, shuttle. Each login sees ONLY what it needs.
+         chosen from the WorkOS org's role_view. all three logins are proven.
+
+    F    THE SETTINGS PAGE — apparatus and hose length are EDITABLE and the math follows.
+         nothing derived is stored. editing E7's hose flips the relay verdict live.
+
+Read `docs/BUILD-PHASE-E.md` and `docs/BUILD-PHASE-F.md`. All three read from Firestore and need
+no new data source.
+
 ## DONE WHEN
 
 The scenario runs on `https://fireground.meerkatops.app`, the IC confirmation visibly recalculates

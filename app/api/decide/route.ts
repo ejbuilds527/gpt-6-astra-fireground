@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { assembleFacts } from '@/lib/facts';
+import { assembleFacts, assembleAdversarialRubric } from '@/lib/facts';
 import { decide, MODELS, type Stage } from '@/lib/decide';
 import { loadVisionAssets, measureVision, VISION_PROMPT } from '@/lib/vision';
 import { sameOrigin } from '@/lib/public-url';
@@ -7,6 +7,10 @@ import { sameOrigin } from '@/lib/public-url';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 600;
+
+// One JSON object per stage, newline delimited, so a client can fill a visible clock as each lands.
+const STAGE_NUMBER: Record<Stage, number> = { ASSEMBLE: 1, PROPOSE: 2, CHECK: 3, CHALLENGE: 4, PRESENT: 5 };
+const STAGE_ACTOR: Record<Stage, string> = { ASSEMBLE: 'code', PROPOSE: MODELS.proposer, CHECK: 'code', CHALLENGE: MODELS.challenger, PRESENT: 'code' };
 
 // OPENAI_API_KEY is mounted on the service from Secret Manager openai-api-key.
 export async function POST(request: Request) {
@@ -21,9 +25,13 @@ export async function POST(request: Request) {
   const started = performance.now();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (event: string, data: unknown) => { if (!cancelled && !request.signal.aborted) controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); };
+      const send = (chunk: Record<string, unknown>) => { if (!cancelled && !request.signal.aborted) controller.enqueue(encoder.encode(JSON.stringify(chunk) + '\n')); };
       try {
-        await decide({ assemble: assembleFacts, signal, emit: data => { completedStage = data.stage; send(data.stage, data); },
+        await decide({ assemble: assembleFacts, signal, rubric: () => assembleAdversarialRubric(),
+          emit: ({ stage, elapsed_ms, total_elapsed_ms, ...payload }) => {
+            completedStage = stage;
+            send({ stage: STAGE_NUMBER[stage], name: stage, by: STAGE_ACTOR[stage], elapsedMs: elapsed_ms, totalElapsedMs: total_elapsed_ms, payload });
+          },
           vision: async () => {
             const assets = await loadVisionAssets();
             signal.throwIfAborted();
@@ -46,12 +54,12 @@ export async function POST(request: Request) {
           },
         });
       } catch {
-        send('ERROR', { error: 'Decision could not complete. NEEDS A MEASUREMENT', status: 'NEEDS A MEASUREMENT', completed_stage: completedStage, total_elapsed_ms: Math.round(performance.now() - started), proposal_withheld: true });
+        send({ stage: 0, name: 'ERROR', by: 'code', elapsedMs: Math.round(performance.now() - started), totalElapsedMs: Math.round(performance.now() - started), payload: { error: 'Decision could not complete. NEEDS A MEASUREMENT', status: 'NEEDS_A_MEASUREMENT', completed_stage: completedStage, proposal_withheld: true } });
       } finally {
         if (!cancelled) controller.close();
       }
     },
     cancel() { cancelled = true; abort.abort(); },
   });
-  return new Response(stream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no' } });
+  return new Response(stream, { headers: { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no' } });
 }

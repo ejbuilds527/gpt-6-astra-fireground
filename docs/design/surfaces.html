@@ -1,0 +1,600 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fireground · the three surfaces</title>
+<style>
+:root{
+  --canvas:#1c1f25; --panel:#23272e; --sunk:#1a1d22; --rule:rgba(140,193,210,.14);
+  --rule2:rgba(140,193,210,.26); --ink:#e6ebef; --ink2:#a8b3bd; --ink3:#6e7a85;
+  --teal:#2d7a82; --accent:#5aabb3; --orange:#EF8200; --red:#c8553d; --green:#4f9d69;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  --body:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--ink);font:14px/1.5 var(--body)}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:17px;font-weight:600;margin:0;letter-spacing:.01em}
+.sub{color:var(--ink3);font-size:12px;margin-top:3px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin:18px 0 0}
+.tab{padding:9px 16px;color:var(--ink3);cursor:pointer;font-size:12.5px;letter-spacing:.04em;
+  text-transform:uppercase;border-bottom:2px solid transparent;background:none;border-top:0;border-left:0;border-right:0;font-family:inherit}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.role{font-size:10.5px;color:var(--ink3);margin-left:7px;text-transform:none;letter-spacing:0}
+.view{display:none;padding-top:18px}.view.on{display:block}
+.grid{display:grid;grid-template-columns:1.35fr 1fr;gap:14px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:5px;padding:14px 15px}
+.card h2{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);
+  margin:0 0 11px;font-weight:600}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:5px 0;text-align:left;border-bottom:1px solid var(--rule);vertical-align:baseline}
+th{color:var(--ink3);font-weight:500;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.ok{color:var(--green)}.warn{color:var(--orange)}.bad{color:var(--red)}.dim{color:var(--ink3)}
+.tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:1px 5px;border-radius:2px;
+  border:1px solid currentColor}
+.big{font-size:26px;font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:1.1}
+.unit{font-size:11px;color:var(--ink3);margin-left:3px}
+.clock{display:flex;gap:14px;align-items:baseline;padding:11px 15px;background:var(--sunk);
+  border:1px solid var(--rule);border-radius:5px;margin-bottom:14px}
+.stage{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--rule)}
+.stage:last-child{border-bottom:0}
+.hint{font-size:11.5px;color:var(--ink3);margin-top:9px;line-height:1.45}
+.hold{background:rgba(239,130,0,.09);border:1px solid var(--orange);color:var(--orange);
+  padding:9px 12px;border-radius:4px;font-size:12.5px;letter-spacing:.02em;margin-top:12px}
+svg{display:block;width:100%;height:auto;background:var(--sunk);border-radius:4px}
+.lbl{font:10.5px var(--mono);fill:var(--ink2)}
+.lbl-s{font:9px var(--mono);fill:var(--ink3)}
+.k{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink3);margin-top:9px}
+.k i{display:inline-block;width:16px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+
+.answer{display:flex;align-items:center;gap:16px;background:rgba(239,130,0,.10);
+  border:2px solid var(--orange);border-radius:5px;padding:12px 16px;margin-bottom:11px}
+.answer-side{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--orange);
+  line-height:1;letter-spacing:-.01em;white-space:nowrap}
+.answer-why-1{font-size:15px;color:var(--ink);font-weight:600}
+.answer-why-2{font-size:12.5px;color:var(--ink2);margin-top:2px}
+.say{background:var(--sunk);border:1px solid var(--rule2);border-radius:4px;
+  padding:9px 12px;font-size:13px;color:var(--ink);margin-bottom:12px;line-height:1.45}
+.say-k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--accent);
+  display:block;margin-bottom:3px}
+.truth{display:flex;gap:12px;align-items:center;margin-top:12px;padding-top:12px;
+  border-top:1px solid var(--rule)}
+.truth svg{flex:0 0 auto}
+.truth-k{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink3)}
+
+.lines{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.ln{background:var(--sunk);border:2px solid var(--rule2);color:var(--ink3);border-radius:5px;
+  padding:13px 6px;font:600 10.5px/1.25 var(--body);letter-spacing:.05em;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:5px;min-height:74px;justify-content:center}
+.ln b{font-family:var(--mono);font-size:19px;font-weight:700;letter-spacing:0}
+.ln.on{background:rgba(239,130,0,.13);border-color:var(--orange);color:var(--orange)}
+.demand{display:flex;gap:24px;margin-top:12px;padding-top:11px;border-top:1px solid var(--rule)}
+.dl{font-size:9.5px;letter-spacing:.12em;color:var(--ink3)}
+.dv{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1.15}
+
+.modes{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.md{background:var(--sunk);border:2px solid var(--rule2);color:var(--ink3);border-radius:5px;
+  padding:12px 5px;font:600 10px/1.3 var(--body);letter-spacing:.05em;cursor:pointer;min-height:76px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center}
+.md b{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0;opacity:.85}
+.md.on{background:rgba(239,130,0,.15);border-color:var(--orange);color:var(--orange)}
+.md.out{opacity:.42;text-decoration:line-through;text-decoration-thickness:1px}
+.md.ung{border-style:dashed;color:var(--ink3)}
+.split{display:flex;gap:26px;margin-top:11px;padding-top:11px;border-top:1px solid var(--rule)}
+.sk{font-size:9.5px;letter-spacing:.12em;color:var(--ink3)}
+.sv{font-family:var(--mono);font-size:27px;font-weight:700;line-height:1.15}
+.sn{font-size:11px;color:var(--ink3)}
+.chainwrap{display:flex;gap:10px;align-items:flex-end;margin-top:6px}
+.chainwrap svg:first-child{height:400px;width:auto;background:none;flex:0 0 auto}
+.chainwrap svg:last-child{height:210px;width:auto;background:none;flex:0 0 auto}
+.cm{font-family:var(--mono);font-weight:700}
+.asg{margin-bottom:11px}
+.ar{display:grid;grid-template-columns:46px 78px 1fr 62px;gap:9px;align-items:center;
+  padding:8px 9px;background:var(--sunk);border:1px solid var(--rule);border-radius:4px;margin-bottom:5px}
+.au{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--ink)}
+.ad{font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;padding:5px 3px;
+  border-radius:3px;letter-spacing:.03em}
+.ad.in{background:rgba(239,130,0,.16);color:var(--orange);border:1.5px solid var(--orange)}
+.ad.out{background:rgba(90,171,179,.16);color:var(--accent);border:1.5px solid var(--accent)}
+.ad.none{color:var(--ink3);border:1.5px dashed var(--rule2)}
+.a1{font-size:12.5px;color:var(--ink)}
+.a2{font-size:11px;color:var(--ink3);font-family:var(--mono)}
+.ae{font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--ink2);text-align:right;line-height:1.25}
+.hand{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--accent);
+  text-align:center;padding:5px;border:1px dashed var(--rule2);border-radius:3px}
+
+.addrbar{display:flex;gap:8px;margin:16px 0 4px}
+#addr{flex:1;background:var(--sunk);border:1px solid var(--rule2);color:var(--ink);
+  border-radius:4px;padding:10px 12px;font:14px var(--body)}
+.go,.drawerbtn{background:var(--sunk);border:1.5px solid var(--rule2);color:var(--ink2);
+  border-radius:4px;padding:10px 14px;font:600 11px var(--body);letter-spacing:.08em;cursor:pointer}
+.go{border-color:var(--orange);color:var(--orange)}
+.drawerbtn{border-color:var(--accent);color:var(--accent)}
+.scrim{position:fixed;inset:0;background:rgba(10,12,15,.6);opacity:0;pointer-events:none;
+  transition:opacity .18s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(520px,94vw);background:var(--panel);
+  border-left:1px solid var(--rule2);transform:translateX(100%);transition:transform .2s ease;
+  z-index:41;overflow-y:auto;padding:16px 18px 40px}
+.drawer.on{transform:none}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:1px solid var(--rule);padding-bottom:11px;margin-bottom:13px}
+.dtitle{font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.06em}
+.dsub{font-size:11px;color:var(--ink3);margin-top:3px}
+.dclose{background:none;border:0;color:var(--ink3);font-size:24px;cursor:pointer;line-height:1}
+.dsec{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink2);
+  margin:15px 0 7px;display:flex;align-items:center;gap:7px}
+.dt{margin-left:auto;color:var(--ink3);font-size:10px}
+.dby{font-size:8.5px;padding:2px 5px;border-radius:2px;letter-spacing:.06em}
+.dby.code{background:rgba(140,193,210,.13);color:var(--ink3)}
+.dby.astra{background:rgba(239,130,0,.16);color:var(--orange)}
+.dby.sol{background:rgba(123,94,167,.2);color:#a08cc4}
+.dtool{font-family:var(--mono);font-size:10.5px;color:var(--ink3);padding:3px 0 3px 9px;
+  border-left:2px solid var(--rule);line-height:1.45}
+.dpick{font-size:12px;padding:6px 0 6px 9px;border-left:2px solid var(--orange);margin-bottom:3px}
+.dpick b{font-family:var(--mono);color:var(--ink2);margin-right:7px}
+.dg{display:block;font-family:var(--mono);font-size:9.5px;color:var(--ink3);margin-top:2px}
+.dchk{font-family:var(--mono);font-size:11px;padding:5px 9px;border-radius:3px;margin-bottom:4px;
+  background:var(--sunk)}
+.dchk.bad{color:#e08a78}.dchk.warn{color:var(--orange)}.dchk.ok{color:var(--green)}
+.dch{font-size:12px;padding:8px 10px;border-radius:3px;margin-bottom:6px;line-height:1.45}
+.dch.block{background:rgba(200,85,61,.13);border:1px solid var(--red);color:#e8a091}
+.dch.q{background:var(--sunk);border:1px solid var(--rule2);color:var(--ink2)}
+.theatre{position:relative;border-radius:4px;overflow:hidden}
+.theatre img{width:100%;display:block}
+.theatre .ov{position:absolute;inset:0;width:100%;height:100%;background:none}
+.ml{font-family:var(--mono);font-size:13px;font-weight:700;fill:#fff}
+.ms{font-family:var(--mono);font-size:10px;fill:#fff}
+.laysvg{background:none;width:100%;height:auto;margin:2px 0 12px}
+.nl{font-family:var(--mono);font-size:14px;font-weight:700;fill:var(--ink)}
+.ns{font-family:var(--mono);font-size:10px;fill:var(--ink3)}
+.nb{font-family:var(--mono);font-size:17px;font-weight:700;fill:var(--ink)}
+.nr{font-family:var(--mono);font-size:20px;font-weight:700;fill:#EF8200}
+.two{display:flex;gap:30px;align-items:flex-end}
+.tv{font-family:var(--mono);font-size:56px;font-weight:700;line-height:.95;color:var(--orange)}
+.tk{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink3);margin-top:5px}
+.tsub{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-top:11px;
+  padding-top:9px;border-top:1px solid var(--rule)}
+.dumpopt{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.dop{background:var(--sunk);border:2px solid var(--rule2);color:var(--ink3);border-radius:5px;
+  padding:11px 6px;font:600 11px/1.3 var(--body);letter-spacing:.05em;cursor:pointer;
+  display:flex;flex-direction:column;gap:4px;align-items:center;min-height:60px;justify-content:center}
+.dop b{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0;opacity:.85}
+.dop.on{background:rgba(90,171,179,.15);border-color:var(--accent);color:var(--accent)}
+.trade{margin-top:9px;padding-top:9px;border-top:1px solid var(--rule);font-size:11.5px;
+  color:var(--ink2);line-height:1.5}
+.hero{background:none;width:100%;max-width:430px;height:auto;display:block;margin:0 auto 12px}
+.hl{font-family:var(--mono);font-size:19px;font-weight:700}
+.hs{font-family:var(--mono);font-size:12px}
+.hm{font-family:var(--mono);font-size:24px;font-weight:700;fill:#1c1f25}
+.twoway{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.tw{display:flex;align-items:center;gap:9px;background:rgba(239,130,0,.10);
+  border:2px solid var(--orange);border-radius:5px;padding:10px 12px}
+.twk{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ink3)}
+.twd{font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 6px;border-radius:3px}
+.twd.in{background:rgba(239,130,0,.2);color:var(--orange)}
+.twd.out{background:rgba(90,171,179,.2);color:var(--accent)}
+.tws{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--orange);margin-left:auto}
+.whyswap{font-size:11.5px;color:var(--ink3);line-height:1.5;margin:-4px 0 12px;
+  border-left:2px solid var(--rule2);padding-left:9px}
+.ho{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.14em}
+.hb{font-family:var(--mono);font-size:19px;font-weight:700;fill:#1c1f25}
+.maplay{position:relative;border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin-bottom:12px}
+.maplay img{width:100%;display:block}
+.maplay .ov{position:absolute;inset:0;width:100%;height:100%;background:none}
+.mk text{font-family:var(--mono);font-size:12px;font-weight:700;fill:var(--ink)}
+.mk .mkS{font-size:10px;font-weight:400;fill:var(--ink3)}
+.mk path{stroke-width:1}
+.gl{width:30px;height:20px;display:block}
+.dispatch{display:flex;gap:14px;align-items:center;background:var(--sunk);
+  border:1px solid var(--rule2);border-radius:5px;padding:12px 14px;margin:16px 0 0}
+.tone{background:rgba(200,85,61,.14);border:2px solid var(--red);color:#e8a091;border-radius:4px;
+  padding:14px 18px;font:700 12px var(--body);letter-spacing:.1em;cursor:pointer;white-space:nowrap}
+.tone.live{background:var(--red);color:#fff}
+.clockbox{text-align:center;min-width:104px}
+.cv{font-family:var(--mono);font-size:40px;font-weight:700;line-height:1;color:var(--ink)}
+.cv.run{color:var(--orange)}.cv.over{color:var(--red)}
+.ck{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;color:var(--ink3);margin-top:4px}
+.cad{flex:1;font-family:var(--mono);font-size:12px;color:var(--ink2);line-height:1.5;
+  border-left:2px solid var(--rule2);padding-left:12px;min-height:34px}
+.blocky{display:flex;justify-content:center;margin:12px 0 4px}
+.blocky svg{width:270px;height:auto;background:none}
+.alarm{margin-top:11px;background:rgba(200,85,61,.12);border:1px solid var(--red);color:#e8a091;
+  border-radius:4px;padding:9px 12px;font-size:12.5px;line-height:1.45}
+.laypair{display:flex;gap:12px;align-items:flex-end;margin-top:4px}
+.laypair svg{background:none;height:230px;width:auto;flex:0 0 auto}
+details.card summary{cursor:pointer;font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink3);font-weight:600;list-style:none}
+details.card summary::after{content:"  +";font-family:var(--mono)}
+details[open].card summary::after{content:"  \2212"}
+@media(max-width:760px){.modes{grid-template-columns:1fr 1fr}}
+.note{font-size:11px;color:var(--ink3);border-left:2px solid var(--rule2);padding-left:9px;margin-top:11px}
+</style></head><body><div class="wrap">
+
+<h1>Fireground · the three surfaces</h1>
+<div class="sub">Structure fire · Lodge (Michael's House) · 208 Valley Rd, New Canaan CT</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true" data-v="cmd">Command<span class="role">command@ · New Canaan</span></button>
+  <button class="tab" role="tab" aria-selected="false" data-v="shu">Shuttle<span class="role">shuttle@ · Wilton Tanker 1</span></button>
+  <button class="tab" role="tab" aria-selected="false" data-v="stg">Staging<span class="role">staging@ · Norwalk</span></button>
+</div>
+
+<!-- ================= COMMAND ================= -->
+<section class="view on" id="cmd">
+  <div class="dispatch">
+    <button class="tone" id="tone">SOUND THE TONE</button>
+    <div class="clockbox"><div class="cv" id="cv">80</div><div class="ck">SECONDS &middot; NFPA 1710 TURNOUT</div></div>
+    <div class="cad" id="cad">standing by</div>
+  </div>
+
+  <div class="addrbar">
+    <input id="addr" value="208 Valley Rd, New Canaan, CT" spellcheck="false">
+    <button class="go">RECALCULATE</button>
+    <button class="drawerbtn" id="dopen">80 s TRACE &nbsp;&rsaquo;</button>
+  </div>
+
+  <div class="clock">
+    <div><div class="dim" style="font-size:10px;letter-spacing:.08em">TURNOUT · NFPA 1710</div>
+      <div class="big">62<span class="unit">s of 80</span></div></div>
+    <div style="flex:1">
+      <div class="stage"><span>hydrants ranked</span><span class="num ok">2.1 s</span></div>
+      <div class="stage"><span>Astra reads the imagery</span><span class="num warn">31.4 s</span></div>
+      <div class="stage"><span>options built · checks run</span><span class="num ok">3.2 s</span></div>
+      <div class="stage"><span>mutual aid staged</span><span class="num ok">1.4 s</span></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <h2>Supply mode</h2>
+    <div class="modes">
+      <button class="md out">HYDRANT<b>no reach</b></button>
+      <button class="md out">RELAY<b>800 ft short</b></button>
+      <button class="md ung">DRAFT<b>ungraded</b></button>
+      <button class="md">SHUTTLE<br>DUMP TANK<b>ok</b></button>
+      <button class="md on">SHUTTLE<br>NURSE<b>718 gpm</b></button>
+    </div>
+</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>The lay &middot; nozzle to water</h2>
+      <div class="twoway">
+        <div class="tw"><span class="twk">DRIVE<br>IN</span><span class="twd in"><svg viewBox="0 0 30 20" class="gl"><path d="M2 3 L26 10 L2 17 Z" fill="currentColor"/></svg></span><span class="tws">RIGHT</span></div>
+        <div class="tw"><span class="twk">STREET<br>OUT</span><span class="twd out"><svg viewBox="0 0 30 20" class="gl"><path d="M2 3 L26 10 L2 17 Z" fill="none" stroke="currentColor" stroke-width="2.5"/></svg></span><span class="tws">LEFT</span></div>
+      </div>
+
+      <div class="maplay">
+        <img src="lay-map.png" alt="Supply line: right up the drive, left down Valley Rd, one crossing at the dump">
+        <svg viewBox="0 0 560 600" class="ov">
+          <path d="M207.6 228.7 L214.3 221.9 L219.3 212.0 L220.2 203.0 L217.3 196.7 L215.1 198.6 L223.4 198.7 L233.2 194.8 L239.2 186.3 L238.9 180.3 L242.6 173.1 L244.6 163.6 L241.4 154.3 L236.2 146.1 L230.5 140.8 L227.8 137.0 L224.1 129.8 L218.1 127.8 L216.7 126.7 L218.6 123.1" stroke="#EF8200" stroke-width="5" fill="none" stroke-linejoin="round"/>
+          <path d="M206.9 218.7 L220.3 226.9 L234.4 238.0 L250.2 254.5 L257.8 264.0 L262.9 275.3 L264.9 280.0 L270.5 296.8 L281.7 329.0 L290.0 356.1 L296.3 369.8 L300.8 378.0 L325.9 420.0 L349.1 458.3 L361.5 475.3" stroke="#EF8200" stroke-width="5" fill="none" stroke-linejoin="round"/>
+          <path d="M361.5 475.3 L356.6 478.9" stroke="#EF8200" stroke-width="5"
+                fill="none" stroke-dasharray="6 5"/>
+          <circle cx="359.1" cy="477.1" r="13" fill="none"
+                  stroke="#c8553d" stroke-width="2.5"/>
+          <g transform="translate(242.6,173.1) rotate(-71.3)">
+            <path d="M-12 -10 L14 0 L-12 10 Z" fill="#EF8200"/></g>
+          <g transform="translate(270.5,296.8) rotate(71.1)">
+            <path d="M-12 -10 L14 0 L-12 10 Z" fill="none" stroke="#EF8200" stroke-width="3"/></g>
+          <circle cx="213.0" cy="121.1" r="8" fill="#c8553d" stroke="#1c1f25" stroke-width="3"/>
+          <circle cx="203.4" cy="224.5" r="6" fill="#e6ebef" stroke="#1c1f25" stroke-width="3"/>
+          <circle cx="356.6" cy="478.9" r="8" fill="#8f9aa4" stroke="#1c1f25" stroke-width="3"/>
+          <g class="mk">
+            <text x="226" y="118">THE LODGE</text>
+            <text x="226" y="132" class="mkS">E7 attack &middot; 680 gpm</text>
+            <text x="192" y="221" text-anchor="end">DROP</text>
+            <text x="192" y="235" text-anchor="end" class="mkS">no crossing here</text>
+            <text x="370" y="481">DUMP</text>
+            <text x="370" y="495" class="mkS">pond 3,500 gal</text>
+            <text x="341" y="459" text-anchor="end"
+                  style="fill:#e08a78">CROSS ONCE &middot; RAMP IT</text>
+          </g>
+        </svg>
+      </div>
+      <div class="blocky">
+        <svg viewBox="0 0 300 470" role="img" aria-label="The drive, straightened, hose hard right, lane open">
+          <rect x="86" y="8" width="150" height="44" fill="#2d7a82"/>
+          <text x="161" y="28" class="hl" fill="#0f1418" text-anchor="middle">ATTACK</text>
+          <text x="161" y="43" class="hs" fill="#0f1418" text-anchor="middle">THE LODGE</text>
+          <rect x="86" y="52" width="150" height="330" fill="#2a3138"/>
+          <text x="161" y="196" class="hs" fill="#6e7a85" text-anchor="middle">PRIVATE DRIVE</text>
+          <text x="161" y="214" class="hs" fill="#6e7a85" text-anchor="middle">823 ft &middot; single track</text>
+          <text x="161" y="250" class="ho" fill="#5aabb3" text-anchor="middle">LANE OPEN</text>
+          <rect x="228" y="52" width="8" height="330" fill="#EF8200"/>
+          <g class="hb">
+            <circle cx="268" cy="120" r="16" fill="#EF8200"/><text x="268" y="126" text-anchor="middle">R</text>
+            <path d="M252 120 H237" stroke="#EF8200" stroke-width="2"/>
+            <circle cx="268" cy="300" r="16" fill="#EF8200"/><text x="268" y="306" text-anchor="middle">R</text>
+            <path d="M252 300 H237" stroke="#EF8200" stroke-width="2"/>
+          </g>
+          <g stroke="#e6ebef" stroke-width="3" fill="none">
+            <path d="M52 300 V140"/><path d="M40 158 L52 132 L64 158"/>
+          </g>
+          <text x="8" y="218" class="hs" fill="#e6ebef">E7 UP</text>
+          <rect x="52" y="382" width="218" height="34" fill="#3a424b"/>
+          <text x="161" y="404" class="hl" fill="#e6ebef" text-anchor="middle">DROP &middot; VALLEY RD</text>
+          <text x="161" y="440" class="hs" fill="#6e7a85" text-anchor="middle">5 in in a 12 ft lane</text>
+          <text x="161" y="458" class="hs" fill="#6e7a85" text-anchor="middle">drawn to scale</text>
+        </svg>
+      </div>
+      <div class="whyswap"><b>Walk the sidewalk.</b> The driveway meets Valley Rd on the LEFT side, so the line stays left the whole way down &mdash; no crossing at the drop. The dump site is on the far side, so it crosses <b>once, at the dump, and gets ramped</b>. Astra picked both sides from the rule and the measured geometry.</div>
+
+      <div class="dumpopt">
+        <button class="dop on">PORTABLE POND<b>3,500 gal &middot; E4 drafts</b></button>
+        <button class="dop">NURSE TANKER<b>T8 3,000 gal</b></button>
+      </div>
+
+      <div class="asg">
+        <div class="ar"><div class="au">E7</div><div class="ad in">LAY IN</div>
+          <div class="am"><div class="a1">drop &rarr; the Lodge</div>
+            <div class="a2">823 ft of 1,500 &middot; RIGHT</div></div>
+          <div class="ae">ATTACK<br>PUMP</div></div>
+        <div class="ar"><div class="au">E2</div><div class="ad out">LAY OUT</div>
+          <div class="am"><div class="a1">drop &rarr; the dump site</div>
+            <div class="a2">2,316 ft of 2,500 &middot; Valley Rd</div></div>
+          <div class="ae">DUMP<br>PUMP</div></div>
+        <div class="ar"><div class="au">E4</div><div class="ad none">NO LAY</div>
+          <div class="am"><div class="a1">sets the portable pond</div>
+            <div class="a2">3,500 gal &middot; drafts from it</div></div>
+          <div class="ae">DRAFT</div></div>
+        <div class="hand">HAND-OFF &middot; VALLEY RD DROP</div>
+      </div>
+      <div class="say"><span class="say-k">SAY THIS</span>
+        Engine 7 <b>laying in</b>, right side, eight hundred feet to the Lodge.
+        Engine 2 <b>laying out</b> from the drop to the dump site, twenty-three hundred feet.
+        Dump site is the Silvermine bend. Portable pond, Engine 4 drafting.</div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h2>The shuttle</h2>
+        <div class="two">
+          <div><div class="tv">3</div><div class="tk">TANKERS</div></div>
+          <div><div class="tv">8.4</div><div class="tk">MIN LOOP</div></div>
+        </div>
+        <div class="tsub">889 gpm delivered &middot; 680 needed &middot; margin +209</div>
+        <div class="trade">Dump at the bend, not the fire:<br>
+        <b>&minus;1 tanker &middot; &minus;5.5 min cycle &middot; +2,316 ft of hose</b></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <h2>Lines off E7</h2>
+        <div class="lines">
+          <button class="ln on" data-gpm="180">1&frac34; HANDLINE<b>180</b></button>
+          <button class="ln"    data-gpm="180">1&frac34; HANDLINE<b>180</b></button>
+          <button class="ln on" data-gpm="500">2&frac12; MONITOR<b>500</b></button>
+        </div>
+        <div class="demand">
+          <div><div class="dl">FLOWING</div><div class="dv" id="gpm">680<span class="unit">gpm</span></div></div>
+          <div><div class="dl">TANK LASTS</div><div class="dv warn" id="tank">66<span class="unit">sec</span></div></div>
+        </div>
+      </div>
+
+      <details class="card">
+        <summary>Hydrants &middot; road closure</summary>
+        <table style="margin-top:10px">
+          <tr><th>id</th><th class="r">ft</th><th class="r">gpm</th><th>status</th></tr>
+          <tr><td>1-21</td><td class="r">148</td><td class="r">608</td><td><span class="tag bad">red-tagged</span></td></tr>
+          <tr><td>1-07</td><td class="r">780</td><td class="r">&mdash;</td><td class="warn">short of 680</td></tr>
+          <tr><td>1-09</td><td class="r">784</td><td class="r">&mdash;</td><td class="warn">short of 680</td></tr>
+          <tr><td>1-18 fill</td><td class="r">&mdash;</td><td class="r ok">856</td><td class="warn">far side</td></tr>
+        </table>
+        <div class="alarm" style="margin-top:9px">CLOSE SILVERMINE RD &middot; CT-106 TO PERRY AVE &middot; 1.05 mi</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SHUTTLE ================= -->
+<section class="view" id="shu">
+  <div class="grid">
+    <div class="card">
+      <h2>The loop</h2>
+      <div class="maplay">
+        <img src="shuttle-map.png" alt="The tanker shuttle loop between the dump site and the fill site">
+        <svg viewBox="0 0 560 470" class="ov">
+          <path d="M102.5 133.4 L116.9 147.0 L128.7 158.3 L143.4 170.2 L172.8 193.2 L209.4 220.0 L236.8 236.3 L270.9 254.2 L321.3 282.2 L350.6 294.7 L395.8 312.1 L403.6 315.5 L422.9 327.7 L433.5 335.1 L449.0 345.2 L458.2 336.8" stroke="#EF8200" stroke-width="5" fill="none" stroke-linejoin="round"/>
+          <path d="M458.2 336.8 L451.9 344.8 L442.8 341.8 L431.3 333.3 L403.1 315.4 L395.4 312.1 L340.3 291.0 L312.9 277.8 L251.2 244.3 L217.5 225.0 L196.2 210.6 L168.1 189.4 L137.8 165.2 L123.1 153.3 L112.7 143.3 L102.5 133.4" stroke="#8f9aa4" stroke-width="5" fill="none" stroke-linejoin="round"
+                stroke-dasharray="10 7"/>
+          <g transform="translate(239.2,231.9) rotate(29.1)">
+            <path d="M-12 -10 L14 0 L-12 10 Z" fill="#EF8200"/></g>
+          <g transform="translate(220.1,220.8) rotate(-148.5)">
+            <path d="M-12 -10 L14 0 L-12 10 Z" fill="none" stroke="#8f9aa4" stroke-width="3"/></g>
+          <circle cx="105.9" cy="129.8" r="9" fill="#c8553d" stroke="#1c1f25" stroke-width="3"/>
+          <circle cx="450.9" cy="331.7" r="9" fill="#5aabb3" stroke="#1c1f25" stroke-width="3"/>
+          <g class="mk">
+            <text x="92" y="126" text-anchor="end">DUMP</text>
+            <text x="92" y="140" text-anchor="end" class="mkS">pond 3,500 gal &middot; 1.7 min</text>
+            <text x="465" y="328">FILL &middot; 1-18</text>
+            <text x="465" y="342" class="mkS">856 gpm &middot; 2.5 min</text>
+            <text x="16" y="26">LOADED &rarr; 1.1 min</text>
+            <text x="16" y="44" class="mkS">EMPTY &rarr; 1.1 min &middot; routed separately</text>
+          </g>
+        </svg>
+      </div>
+      <div class="whyswap">Solid orange runs <b>loaded</b> to the dump. Dashed grey runs
+      <b>empty</b> back to the fill. Both legs routed separately &mdash; never assumed equal.</div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h2>Turnaround</h2>
+        <div class="two">
+          <div><div class="tv">3</div><div class="tk">TANKERS</div></div>
+          <div><div class="tv">8.4</div><div class="tk">MIN LOOP</div></div>
+        </div>
+        <div class="tsub">889 gpm delivered &middot; 680 needed</div>
+      </div>
+      <div class="card">
+        <h2>The cycle</h2>
+        <table>
+          <tr><th>leg</th><th class="r">min</th></tr>
+          <tr><td>loaded, dump &larr; fill</td><td class="r">1.1</td></tr>
+          <tr><td>fill at 1-18</td><td class="r">2.5</td></tr>
+          <tr><td>empty, fill &larr; dump</td><td class="r">1.1</td></tr>
+          <tr><td>dump into the pond</td><td class="r">1.7</td></tr>
+          <tr><td>manoeuvre, both ends</td><td class="r">2.0</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STAGING ================= -->
+<section class="view" id="stg">
+  <div class="grid">
+    <div class="card">
+      <h2>Where to stage · Norwalk</h2>
+      <div class="big">SSE<span class="unit">your approach · 4.99 mi</span></div>
+      <table style="margin-top:11px">
+        <tr><td>staging point</td><td class="r warn">NOT SET</td></tr>
+        <tr><td>your state</td><td class="r">STAGED</td></tr>
+        <tr><td>called in</td><td class="r dim">not yet</td></tr>
+      </table>
+      <div class="hold">DO NOT ENTER THE FIRE ROAD UNTIL COMMAND CALLS YOU IN.</div>
+</div>
+    <div class="card">
+      <h2>Who else is on your approach</h2>
+      <table>
+        <tr><th>company</th><th class="r">mi</th><th>from</th></tr>
+        <tr><td><b>Norwalk</b></td><td class="r">5.0</td><td>SSE</td></tr>
+        <tr><td>Darien</td><td class="r">6.0</td><td>S</td></tr>
+        <tr><td>Noroton Heights</td><td class="r">6.5</td><td>S</td></tr>
+        <tr><td>Noroton</td><td class="r">7.1</td><td>S</td></tr>
+        <tr><td>Stamford</td><td class="r">8.4</td><td>SSW</td></tr>
+      </table>
+</div>
+  </div>
+</section>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="What happened in the first 80 seconds">
+  <div class="dhead">
+    <div><div class="dtitle">THE FIRST 80 SECONDS</div>
+      <div class="dsub">62.3 s elapsed &middot; proposed by GPT-6 Astra &middot; challenged by Sol</div></div>
+    <button class="dclose" id="dclose">&times;</button>
+  </div>
+
+  <div class="dsec">1 &middot; ASSEMBLE <span class="dby code">CODE</span><span class="dt">4.7 s</span></div>
+  <div class="dtool">geocode(address) &rarr; 41.16427, -73.46848</div>
+  <div class="dtool">hydrants_near(site, 1200 ft) &rarr; 3 &middot; F.HYD.1-21 F.HYD.1-07 F.HYD.1-09</div>
+  <div class="dtool">water_demand([h1, m1]) &rarr; 680 gpm &middot; 66 s &middot; F.DEM.gpm</div>
+  <div class="dtool">route(scene, 1-18) &rarr; 0.9 mi &middot; 3 min &middot; F.RT.fill</div>
+  <div class="dtool">hydrant_side_of_road(1-18, F.RT.fill) &rarr; LEFT &middot; 7.1 m &middot; F.HYD.1-18.side</div>
+  <div class="dtool">route_overlap(F.RT.stage, F.RT.fill) &rarr; 45% &middot; F.STG.overlap</div>
+
+  <div class="dsec">2 &middot; PROPOSE <span class="dby astra">GPT-6 ASTRA</span><span class="dt">31.4 s</span></div>
+  <div class="dpick"><b>supply_mode</b> shuttle_nurse
+    <span class="dg">F.HYD.1-21.status &middot; F.APP.E7.hose &middot; F.RT.loop.cycle</span></div>
+  <div class="dpick"><b>lay_side</b> RIGHT
+    <span class="dg">F.SITE.driveway_ft &middot; F.SITE.drive_single_track</span></div>
+  <div class="dpick"><b>fill_site</b> 1-18
+    <span class="dg">F.HYD.1-18.gpm &middot; F.HYD.1-18.side</span></div>
+  <div class="dpick"><b>unreadable</b> <span class="warn">tree canopy over the last 180 ft of the drive</span></div>
+
+  <div class="dsec">3 &middot; CHECK <span class="dby code">CODE</span><span class="dt">3.2 s</span></div>
+  <div class="dchk bad">BLOCK &nbsp;hydrant &mdash; 1-21 red-tagged, 1-07 and 1-09 under 680 gpm</div>
+  <div class="dchk bad">BLOCK &nbsp;relay &mdash; carries 4,000 ft, needs 4,800. SHORT 800 ft</div>
+  <div class="dchk warn">UNGRADED &nbsp;draft &mdash; static lift not surveyed &middot; NFPA 1142 caps at 10 ft</div>
+  <div class="dchk ok">PASS &nbsp;shuttle nurse &mdash; 718 gpm against 680 &middot; margin +38</div>
+
+  <div class="dsec">4 &middot; CHALLENGE <span class="dby sol">SOL &middot; CLEAN CONTEXT</span><span class="dt">22.1 s</span></div>
+  <div class="dch block"><b>BLOCK &middot; staging</b><br>
+    The pick reports 0% overlap for the inbound leg only. Staging to scene shares 45% of the
+    shuttle route and is not stated.
+    <span class="dg">F.STG.overlap &middot; F.RT.stage_to_scene</span></div>
+  <div class="dch q"><b>QUESTION &middot; fill_site</b><br>
+    1-18 was flow tested 696 days ago. The pick treats 856 gpm as current.
+    <span class="dg">F.HYD.1-18.flow_test_age</span></div>
+  <div class="dch q"><b>QUESTION &middot; tanker_count</b><br>
+    Every tanker capacity is SYNTHETIC. 4 tankers is derived from an assumed 2,500 gal.
+    <span class="dg">F.APP.tanker.source</span></div>
+
+  <div class="dsec">5 &middot; PRESENT <span class="dby code">CODE</span><span class="dt">0.9 s</span></div>
+  <div class="dtool">1 open BLOCK shown beside its pick &middot; the proposer cannot clear it</div>
+</aside>
+<script>
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.setAttribute('aria-selected','false')});
+    document.querySelectorAll('.view').forEach(function(v){v.classList.remove('on')});
+    t.setAttribute('aria-selected','true');
+    document.getElementById(t.dataset.v).classList.add('on');
+  });
+});
+
+document.querySelectorAll('.dop').forEach(function(d){
+  d.addEventListener('click',function(){
+    document.querySelectorAll('.dop').forEach(function(x){x.classList.remove('on')});
+    d.classList.add('on');
+  });
+});
+document.querySelectorAll('.md').forEach(function(m){
+  m.addEventListener('click',function(){
+    document.querySelectorAll('.dop').forEach(function(d){
+  d.addEventListener('click',function(){
+    document.querySelectorAll('.dop').forEach(function(x){x.classList.remove('on')});
+    d.classList.add('on');
+  });
+});
+document.querySelectorAll('.md').forEach(function(x){x.classList.remove('on')});
+    m.classList.add('on');
+  });
+});
+document.querySelectorAll('.ln').forEach(function(b){
+  b.addEventListener('click',function(){
+    b.classList.toggle('on');
+    var g=0; document.querySelectorAll('.ln.on').forEach(function(x){g+=+x.dataset.gpm});
+    document.getElementById('gpm').innerHTML=g+'<span class="unit">gpm</span>';
+    var t=g?Math.floor(750/g*60):0;
+    var el=document.getElementById('tank');
+    el.innerHTML=(g?t:'\u2014')+'<span class="unit">sec</span>';
+    el.className='dv '+(g===0?'dim':t<60?'bad':t<120?'warn':'ok');
+  });
+});
+
+var dw=document.getElementById('drawer'),sc=document.getElementById('scrim');
+function tog(v){dw.classList.toggle('on',v);sc.classList.toggle('on',v)}
+document.getElementById('dopen').addEventListener('click',function(){tog(true)});
+document.getElementById('dclose').addEventListener('click',function(){tog(false)});
+sc.addEventListener('click',function(){tog(false)});
+
+var ALARM1="Attention New Canaan. Structure fire. Two zero eight Valley Road. Silver Hill Hospital. Building not confirmed. Engine seven, Engine two, Tanker eight, respond.";
+function twoTone(){
+  var C=new (window.AudioContext||window.webkitAudioContext)();
+  function beep(hz,at,ms){
+    var o=C.createOscillator(),g=C.createGain();
+    o.type="sine"; o.frequency.value=hz; o.connect(g); g.connect(C.destination);
+    g.gain.setValueAtTime(0,C.currentTime+at);
+    g.gain.linearRampToValueAtTime(0.28,C.currentTime+at+0.02);
+    g.gain.setValueAtTime(0.28,C.currentTime+at+ms/1000-0.03);
+    g.gain.linearRampToValueAtTime(0,C.currentTime+at+ms/1000);
+    o.start(C.currentTime+at); o.stop(C.currentTime+at+ms/1000+0.02);
+  }
+  beep(947,0,1.0); beep(1383,1.12,3.0);
+  return 4.2;
+}
+function say(t){
+  if(!window.speechSynthesis) return;
+  var u=new SpeechSynthesisUtterance(t); u.rate=0.86; u.pitch=0.7; u.volume=1;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+document.getElementById("tone").addEventListener("click",function(){
+  var b=this, cv=document.getElementById("cv"), cad=document.getElementById("cad");
+  b.classList.add("live"); b.textContent="TONE OUT";
+  cad.textContent="\u2022 \u2022 \u2022";
+  var d=twoTone();
+  setTimeout(function(){ cad.textContent=ALARM1; say(ALARM1); },d*1000);
+  var t0=Date.now();
+  cv.className="cv run";
+  var iv=setInterval(function(){
+    var el=(Date.now()-t0)/1000, left=80-el;
+    if(left>0){ cv.textContent=Math.ceil(left); }
+    else { cv.textContent="+"+Math.floor(-left); cv.className="cv over"; }
+    if(el>140){ clearInterval(iv); b.classList.remove("live"); b.textContent="SOUND THE TONE"; }
+  },100);
+});
+</script>
+</div></body></html>
