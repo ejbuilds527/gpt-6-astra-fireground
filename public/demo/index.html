@@ -307,10 +307,10 @@ details[open].card summary::after{content:"  \2212"}
             <text x="219" y="196" text-anchor="end">DROP</text>
             <text x="219" y="210" text-anchor="end" class="mkS" style="fill:#e08a78">CROSS HERE</text>
             <text x="219" y="223" text-anchor="end" class="mkS">road already closed</text>
-            <text x="449" y="505" style="fill:#5aabb3">106 &middot; TURN OPEN</text>
-            <text x="449" y="519" class="mkS">mutual aid stages here</text>
-            <text x="449" y="532" class="mkS">tankers in and out</text>
-            <text x="305" y="316" text-anchor="middle" style="fill:#e08a78;font-size:13px">DUMP</text>
+            <text x="449" y="505" style="fill:#e08a78;font-size:13px">DUMP</text>
+            <text x="449" y="519" class="mkS">end of the line &middot; on Silvermine</text>
+            <text x="449" y="532" class="mkS" style="fill:#5aabb3">106 TURN OPEN &middot; mutual aid stages here</text>
+            <text x="305" y="316" text-anchor="middle" style="fill:#EF8200;font-size:13px">RELAY PUMP</text><text x="305" y="329" text-anchor="middle" class="mkS">boosts the line</text>
           </g>
         </svg>
       </div>
@@ -574,11 +574,14 @@ document.querySelectorAll('.ln').forEach(function(b){
   });
 });
 
+// #drawer, #scrim and #dclose are absent from the markup. The unguarded
+// binding threw TypeError at load and aborted the rest of this script block,
+// which is where the tone handler lives. Guarded, not removed.
 var dw=document.getElementById('drawer'),sc=document.getElementById('scrim');
-function tog(v){dw.classList.toggle('on',v);sc.classList.toggle('on',v)}
-document.getElementById('dopen').addEventListener('click',function(){tog(true)});
-document.getElementById('dclose').addEventListener('click',function(){tog(false)});
-sc.addEventListener('click',function(){tog(false)});
+function tog(v){ if(dw) dw.classList.toggle('on',v); if(sc) sc.classList.toggle('on',v); }
+var _dop=document.getElementById('dopen'); if(_dop) _dop.addEventListener('click',function(){tog(true)});
+var _dcl=document.getElementById('dclose'); if(_dcl) _dcl.addEventListener('click',function(){tog(false)});
+if(sc) sc.addEventListener('click',function(){tog(false)});
 
 var ALARM1="Engine seven, engine two, tanker eight, structure fire, two zero eight Valley Road between Hospital Circle and Route one oh six, Silver Hill Hospital, main house alarm sounding. Engine seven, engine two, tanker eight, structure fire, two zero eight Valley Road between Hospital Circle and Route one oh six, Silver Hill Hospital, main house alarm sounding.";
 var CTX=null, TIMERS=[], IV=null;
