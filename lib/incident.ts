@@ -15,7 +15,7 @@ export async function incidentView(role: Role, state: Document, identity: Docume
     tone_at: state.tone_at, selected_option: state.selected_option, updated_at: state.updated_at,
     states: state.states || {}, hold_south: state.hold_south, shuttle_assigned: state.shuttle_assigned };
   const staging = { states: d.settings.staging?.states || [], principle: d.settings.staging?.principle,
-    split: d.settings.staging_gap?.split || {south:(d.settings.mutual_aid?.departments||[]).filter((x:Document)=>x.state!=='HOME'&&String(x.arrives_from_compass).includes('S')).map((x:Document)=>x.department+' '+x.arrives_from_compass+' '+x.straight_mi+' mi')}, point:d.settings.staging_gap?.chosen||null, point_reason:d.settings.staging_gap?.what_that_means||d.settings.staging_gap?.not_chosen, overlap:d.settings.staging_gap?.measured_overlap||null, confirmed:state.staging_confirmed||false,
+    split: d.settings.staging_gap?.split || {}, point: 'NOT SET', point_reason: d.settings.staging_gap?.not_chosen,
     departments: (d.settings.mutual_aid?.departments || []).filter((x: Document) => x.state !== 'HOME')
       .map((x: Document) => ({ code: x.code, department: x.department, bearing: x.arrives_from_compass, distance: x.straight_mi })) };
   if (role === 'staging') return { ...base, staging };

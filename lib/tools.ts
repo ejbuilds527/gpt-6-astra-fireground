@@ -1,14 +1,10 @@
 import { z } from 'zod';
 import { hoseInventory } from './apparatus';
 import { shuttleFacts } from './shuttle';
-import { nearestSegment,points,routeOverlap } from './geometry';
 import type { Document, Snapshot } from './data';
 import { demand, frictionLoss, margin, maxSegment, positive, requiredDischarge, segmentCount, shuttleCycle, tankSeconds, unknown, valid } from './water';
 const n = z.number().finite().nonnegative();
 export const schemas = {
-  hydrant_side_of_road: z.object({id:z.string(),route:z.enum(['outbound','return'])}),
-  route_overlap: z.object({route_a:z.string(),route_b:z.string(),tolerance_m:n}),
-  staging_candidates: z.object({bearing:z.string().optional()}),
   measure_lay: z.object({ from: z.string(), to: z.string().optional() }),
   water_demand: z.object({ line_ids: z.array(z.string()).max(30).optional() }),
   friction_loss: z.object({ hose: z.string(), gpm: n, length: n, elevation_psi: z.number().finite().optional(), appliance_psi: n.optional() }),
@@ -36,27 +32,6 @@ export function evaluateTool(name: ToolName, raw: unknown, d: Snapshot): ToolOut
   const defaultDemand = flowDemand(d);
   const gpm = a.demand ?? (defaultDemand.value === 'unknown' ? undefined : defaultDemand.value);
   const provenance = [`Live Firestore; scenario: ${d.scenarioId}`, p.disclaimer ?? 'Training decision support'];
-  const routeGeometry = (id:string) => {
-    const routes:Document = {outbound:d.shuttle.outbound,return:d.shuttle.return,...(d.settings.staging_gap?.routes||{})};
-    const route=routes[id];return points(route?.polyline?.points??route?.polyline??route?.geometry);
-  };
-  if(name==='hydrant_side_of_road'){
-    const route=routeGeometry(a.route);
-    const h=[...(d.site.hydrants||[]),...(d.sources.hydrants||[])].find((h:Document)=>(h.id||h.facility_id)===a.id);
-    const point={lat:h?.lat??h?.latitude,lon:h?.lon??h?.longitude};
-    if(route.length<2||!Number.isFinite(point.lat)||!Number.isFinite(point.lon))return missing('Hydrant coordinates or directed route polyline missing',provenance);
-    const result=nearestSegment(point,route);
-    return known({...result,offset_m:round(result.offset_m,1),id:a.id,route:a.route,closes_street:result.side==='LEFT'},null,[...provenance,'Side is relative to the stored route direction. Road closure is the far-side connection planning rule, not a surveyed traffic-control plan.']);
-  }
-  if(name==='route_overlap'){
-    const ra=routeGeometry(a.route_a),rb=routeGeometry(a.route_b);
-    if(ra.length<2||rb.length<2)return missing('Both directed route polylines must be stored',provenance);
-    return known(routeOverlap(ra,rb,a.tolerance_m),{tolerance_m:a.tolerance_m},provenance);
-  }
-  if(name==='staging_candidates'){
-    const gap=d.settings.staging_gap||{};
-    return known({point:gap.chosen||'NOT SET',status:gap.status||'ungraded',measured_overlap:gap.measured_overlap||'unknown',reason:gap.what_that_means||gap.not_chosen,parking_lots:gap.parking_lots_NOT_SURVEYED,requested_bearing:a.bearing||'all'},null,[...provenance,'Candidate and precomputed overlap are supplied records. No surveyed parking lot is inferred.']);
-  }
   if (name === 'water_demand') {
     const attack = d.settings.attack_scenario;
     const presets = d.settings.attack_lines?.lines ?? d.settings.attack_lines?.presets ?? [];
@@ -134,9 +109,6 @@ export async function runTool(name: ToolName, input: Record<string, unknown>, sn
   return { name, input, output, ms: round(performance.now() - start) };
 }
 export const descriptions: Record<ToolName,string> = {
- hydrant_side_of_road:'Compute a hydrant side and nearest offset from its coordinates and a directed stored route polyline.',
- route_overlap:'Compute the fraction of route A vertices lying within a supplied meter tolerance of route B. Requires both polylines.',
- staging_candidates:'Read the proposed staging point, both precomputed overlap legs, lane blocking and parking-lot limitations.',
  measure_lay:'Read the measured distance from a hydrant ID or driveway to the active incident, sections, and unknown road-crossing geometry.',
  water_demand:'Compute attack demand and tank duration. Omit line_ids for the stored attack assignment; repeat a preset ID to add another line. Returns available line IDs.',
  friction_loss:'Compute friction from department coefficients. Discharge and margin require explicit elevation and appliance losses; never invent those.',
