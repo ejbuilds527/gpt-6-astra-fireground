@@ -9,7 +9,7 @@ const auth = authkitProxy({
   redirectUri: 'https://fireground.meerkatops.app/callback',
   middlewareAuth: {
     enabled: true,
-    unauthenticatedPaths: ['/', '/signin', '/callback', '/api/ai-health', '/how-it-works.html', '/shuttle-map.png', '/api/ask'],
+    unauthenticatedPaths: ['/', '/signin', '/signout', '/callback', '/api/ai-health', '/how-it-works.html', '/shuttle-map.png', '/api/ask'],
   },
 });
 
