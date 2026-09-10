@@ -20,7 +20,7 @@ export default authkitMiddleware({
   redirectUri: 'https://fireground.meerkatops.app/callback',
   middlewareAuth: {
     enabled: true,
-    unauthenticatedPaths: ['/', '/callback'],
+    unauthenticatedPaths: ['/', '/callback', '/api/ai-health'],
   },
 });
 

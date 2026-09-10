@@ -9,6 +9,10 @@ import OpenAI from 'openai';
 //
 // OPENAI_PROJECT scopes the call to the hackathon project. A key issued inside a
 // project needs it; a legacy user key ignores it.
+//
+// This route is UNAUTHENTICATED so it can be curled, which means anyone can make it
+// spend tokens. It uses gpt-5-nano with an 8-token cap so the cost of abuse is
+// negligible. Do not copy this pattern for a route that does real work.
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +29,7 @@ export async function GET() {
 
   try {
     const r = await client.chat.completions.create({
-      model: 'gpt-5',
+      model: 'gpt-5-nano',
       messages: [{ role: 'user', content: 'Reply with the single word: ready' }],
       max_completion_tokens: 8,
     });
