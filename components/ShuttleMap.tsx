@@ -117,7 +117,7 @@ export function ShuttleMap({
         <path
           d={svgPath(loadedPts)}
           fill="none"
-          stroke={MAP_COLORS.hose}
+          stroke={MAP_COLORS.ink2}
           strokeWidth={5}
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -128,7 +128,7 @@ export function ShuttleMap({
         <Leader at={fillAt} toward="right" label="FILL · 1-18" note="hydrant" />
         <g transform="translate(16,16)">
           <rect width={218} height={44} rx={3} fill={MAP_COLORS.canvas} stroke={MAP_COLORS.roadStroke} />
-          <rect x={11} y={13} width={22} height={4} fill={MAP_COLORS.hose} />
+          <rect x={11} y={13} width={22} height={4} fill={MAP_COLORS.ink2} />
           <text x={41} y={20} fill={MAP_COLORS.ink} fontSize={10.5} fontFamily={MONO}>LOADED · {minutes(loadedTime)}</text>
           <rect x={11} y={29} width={9} height={4} fill={MAP_COLORS.label} />
           <rect x={24} y={29} width={9} height={4} fill={MAP_COLORS.label} />

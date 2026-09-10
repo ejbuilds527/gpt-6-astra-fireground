@@ -8,8 +8,8 @@ import {
 import { MAP_COLORS, staticMapUrl } from '../lib/staticmap';
 
 /** These render on the server. The Static Maps key is read from the environment
- * inside staticMapUrl and is never a prop, so no key crosses a component
- * boundary. Nothing here needs state, an effect or an event handler.
+ * inside staticMapUrl and is never a prop. The resulting image URL still
+ * exposes that key in the browser and requires a restricted Maps key. Nothing here needs state, an effect or an event handler.
  *
  * Position is inline rather than in a class, because the overlay must sit on
  * the image whether or not a stylesheet reaches this component. */
@@ -75,8 +75,8 @@ export function MapFrame({
             height={viewport.height}
             style={{ display: 'block', width: '100%', height: '100%' }}
           />
-        ) : null}
-        {children ? (
+        ) : <p role="status" style={{ padding: 16, color: MAP_COLORS.ink2 }}>Map unavailable — Static Maps is not configured.</p>}
+        {src && children ? (
           <svg
             viewBox={`0 0 ${viewport.width} ${viewport.height}`}
             role="img"
