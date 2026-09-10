@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fireground — how it works</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+  :root{--page:#1c1f25;--panel:#23272e;--sunk:#1f2329;--rail:#161a1f;
+    --ink:rgba(240,248,251,.82);--ink2:rgba(240,248,251,.68);--ink3:rgba(240,248,251,.48);
+    --rule:rgba(140,193,210,.14);--rule2:rgba(140,193,210,.28);
+    --teal:#2d7a82;--tealt:#5aabb3;--amber:#EF8200;--live:#2ca688;
+    --body:"Source Sans 3",system-ui,sans-serif;--mono:"DM Mono",ui-monospace,Menlo,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);font-family:var(--body);line-height:1.55}
+  .wrap{max-width:1000px;margin:0 auto;padding:36px 22px 90px}
+  .brand{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--tealt)}
+  h1{font-size:29px;font-weight:700;margin:6px 0 4px;letter-spacing:-.01em}
+  h2{font-size:18px;font-weight:700;margin:40px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--rule)}
+  p{margin:0 0 12px;color:var(--ink2)}
+  .lede{font-size:15px}
+  .stamp{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+  code,.m{font-family:var(--mono);font-size:.92em}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+     color:var(--ink3);font-weight:400;padding:6px 10px 6px 0;border-bottom:1px solid var(--rule)}
+  td{padding:6px 10px 6px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+  td.n{font-family:var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .code{color:var(--tealt);font-weight:600}
+  .model{color:var(--amber);font-weight:600}
+  .note{border-left:2px solid var(--amber);padding:2px 0 2px 14px;margin:14px 0;color:var(--ink2);font-size:13.5px}
+  .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin:14px 0}
+  .cell{background:var(--panel);padding:14px 16px}
+  .cell h3{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+           color:var(--ink3);margin:0 0 6px;font-weight:400}
+  .cell .big{font-size:15px;font-weight:600;margin-bottom:6px}
+  .cell ul{margin:0;padding-left:16px;font-size:12.5px;color:var(--ink2)}
+  .cell li{margin:3px 0}
+  /* chat */
+  .chat{background:var(--panel);border:1px solid var(--rule);margin:16px 0 0}
+  .chatlog{padding:14px 16px;min-height:120px;max-height:340px;overflow-y:auto}
+  .msg{margin-bottom:12px}
+  .who{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+  .msg .body{font-size:13.5px;margin-top:3px;white-space:pre-wrap}
+  .calls{margin-top:7px;border-left:2px solid var(--teal);padding-left:10px}
+  .call{font-family:var(--mono);font-size:11px;color:var(--ink3);margin:2px 0}
+  .composer{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--rule);background:var(--sunk)}
+  .composer input{flex-grow:1;background:var(--rail);border:1px solid var(--rule);color:var(--ink);
+    font-family:var(--body);font-size:13.5px;padding:9px 12px}
+  .composer input::placeholder{color:rgba(240,248,251,.18)}
+  .composer button{background:var(--teal);color:#F0F8FB;border:0;font-family:var(--body);
+    font-size:13.5px;font-weight:600;padding:9px 18px;cursor:pointer}
+  .composer button:disabled{opacity:.5;cursor:default}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 12px;background:var(--sunk)}
+  .chip{font-family:var(--mono);font-size:11px;padding:5px 10px;border:1px solid var(--rule2);
+    color:var(--ink2);cursor:pointer;background:none}
+  .chip:hover{border-color:var(--tealt);color:var(--tealt)}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="brand">Fireground</div>
+<h1>How it works</h1>
+<p class="lede">Where the map data comes from, where every number is computed, and what the model is and is not allowed to do.</p>
+<p class="stamp">Silver Hill Hospital, 208 Valley Rd, New Canaan CT · training mode · decision support, not verified operational guidance</p>
+
+<h2>The dividing line</h2>
+<p><strong>The model identifies and decides. Code measures.</strong> A vision model asked for a distance returns a confident wrong number, and somebody lays hose against it.</p>
+
+<div class="grid">
+  <div class="cell">
+    <h3>the model · GPT-6 Astra</h3>
+    <div class="big" style="color:var(--amber)">reads · ranks · explains</div>
+    <ul>
+      <li>which pixels are the driveway</li>
+      <li>which side of it is clear</li>
+      <li>is there a turnaround at the top</li>
+      <li>which source to recommend, and why</li>
+      <li>what it cannot know</li>
+    </ul>
+  </div>
+  <div class="cell">
+    <h3>the tools · MCP on Cloud Run</h3>
+    <div class="big" style="color:var(--tealt)">every number</div>
+    <ul>
+      <li>distance in feet</li>
+      <li>demand and tank seconds</li>
+      <li>friction loss and relay count</li>
+      <li>shuttle cycle and tanker count</li>
+      <li>does the lay cross the road</li>
+    </ul>
+  </div>
+  <div class="cell">
+    <h3>the officer</h3>
+    <div class="big">decides</div>
+    <ul>
+      <li>confirms the building</li>
+      <li>picks the supply option</li>
+      <li>chooses attack lines</li>
+      <li>overrides the lay side</li>
+      <li>nothing commits without them</li>
+    </ul>
+  </div>
+</div>
+
+<div class="note">If a number appears in a model reply that did not come from a tool result, that is a defect. Every call is shown, so this is provable rather than claimed.</div>
+
+<h2>Where the map data comes from</h2>
+<table>
+<tr><th>source</th><th>gives</th><th>stored in</th></tr>
+<tr><td class="code">Geocoding API</td><td>the incident, the Lodge parcel, 7 mutual-aid stations, 4 loop waypoints</td><td class="m">Firestore</td></tr>
+<tr><td class="code">Directions API</td><td>the road polyline, the 2.82 mi shuttle loop, the 4,754 ft relay pull</td><td class="m">Firestore</td></tr>
+<tr><td class="code">Static Maps API</td><td>satellite and roadmap of the campus, identical bounds</td><td class="m">Cloud Storage</td></tr>
+<tr><td class="model">Department records</td><td>hydrants with facility id, flow rate, water department, flow-test date</td><td class="m">Firestore</td></tr>
+</table>
+<p>Nothing is estimated from a picture. Every coordinate is geocoded and every road distance is routed.</p>
+
+<h2>The driveway question</h2>
+<p>This is the one that decides whether an ambulance can leave. Getting the lay on the wrong side closes the drive.</p>
+<table>
+<tr><th>question</th><th>answered by</th><th>how</th><th>today</th></tr>
+<tr><td>where is the road</td><td class="code">code</td><td>Directions polyline</td><td class="n">30 vertices</td></tr>
+<tr><td>where does the engine park</td><td class="code">code</td><td>nearest point on the road to the structure</td><td class="n">41.166680, −73.466780</td></tr>
+<tr><td>how far is that from the building</td><td class="code">code</td><td>haversine</td><td class="n">94 ft perpendicular</td></tr>
+<tr><td>which side is the structure on</td><td class="code">code</td><td>cross product, road heading vs road→structure</td><td class="n">LEFT of 309°</td></tr>
+<tr><td>how long is the driveway run</td><td class="code">code</td><td>routed distance along the drive</td><td class="n">823 ft</td></tr>
+<tr><td>which pixels ARE the driveway</td><td class="model">the model</td><td>reads the satellite raster</td><td>a relationship</td></tr>
+<tr><td>which side of it is clear</td><td class="model">the model</td><td>wall, parking, narrowing</td><td>a judgement</td></tr>
+<tr><td>does the proposed lay cross the road</td><td class="code">code</td><td>polyline intersection</td><td>exact, microseconds</td></tr>
+</table>
+<div class="note">The model proposes the side. Code verifies it does not cross. A crossing sends it back — that loop is the adversarial review, and it is the part worth watching.</div>
+<div class="note"><strong>An honest gap.</strong> There is no vector driveway. OpenStreetMap tags them <code>highway=service, service=driveway</code>, and the Connecticut extract is not loaded. So today the driveway is the model reading imagery, and 823 ft is a routed road distance used as an upper bound rather than a traced centreline.</div>
+
+<h2>The numbers, and who produced them</h2>
+<table>
+<tr><th>quantity</th><th>by</th><th>from</th><th>value</th></tr>
+<tr><td>demand</td><td class="code">code</td><td>sum of selected nozzle flows</td><td class="n">180 + 500 = 680 gpm</td></tr>
+<tr><td>tank duration</td><td class="code">code</td><td>gallons ÷ demand</td><td class="n">750 ÷ 680 = 66 s</td></tr>
+<tr><td>friction loss</td><td class="code">code</td><td>C × (Q/100)² × (L/100)</td><td class="n">3.70 psi / 100 ft</td></tr>
+<tr><td>max segment</td><td class="code">code</td><td>180 − 20 intake − 40 margin ÷ FL</td><td class="n">3,244 ft</td></tr>
+<tr><td>relay pumpers</td><td class="code">code</td><td>ceil(distance ÷ segment) − 1</td><td class="n">2–3</td></tr>
+<tr><td>shuttle cycle</td><td class="code">code</td><td>drive + fill + dump + manoeuvre</td><td class="n">13.9 min</td></tr>
+<tr><td>tankers required</td><td class="code">code</td><td>ceil(demand ÷ delivered)</td><td class="n">4</td></tr>
+<tr><td>which hydrant, and why</td><td class="model">the model</td><td>ranks over those facts</td><td>an argument</td></tr>
+</table>
+
+<h2>Ask Astra</h2>
+<p>Every answer below is built from tool calls. The calls are shown under each reply.</p>
+<div class="chat">
+  <div class="chatlog" id="log">
+    <div class="msg"><div class="who" style="color:var(--tealt)">Astra</div>
+      <div class="body">Ask me about the water supply at this incident. I will call the tools for every number and show you which ones I used.</div></div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <form class="composer" id="f">
+    <input id="q" autocomplete="off" placeholder="How many tankers do I need?">
+    <button id="b" type="submit">Ask</button>
+  </form>
+</div>
+
+</div>
+<script>
+const SUGGEST=["How many tankers do I need?","Why not the hydrant in front of the building?",
+  "What if I add a second handline?","Can we relay instead of shuttling?","How long does my tank last?"];
+const log=document.getElementById('log'), f=document.getElementById('f'),
+      q=document.getElementById('q'), b=document.getElementById('b'), chips=document.getElementById('chips');
+SUGGEST.forEach(s=>{const c=document.createElement('button');c.type='button';c.className='chip';c.textContent=s;
+  c.onclick=()=>{q.value=s;f.requestSubmit()};chips.appendChild(c)});
+function add(who,color,text,calls){
+  const d=document.createElement('div');d.className='msg';
+  d.innerHTML=`<div class="who" style="color:${color}">${who}</div><div class="body"></div>`;
+  d.querySelector('.body').textContent=text;
+  if(calls&&calls.length){const c=document.createElement('div');c.className='calls';
+    calls.forEach(t=>{const e=document.createElement('div');e.className='call';
+      e.textContent=`${t.name}(${JSON.stringify(t.input??{}).slice(0,60)}) -> ${JSON.stringify(t.output??'').slice(0,80)}${t.ms!=null?'  '+t.ms+'ms':''}`;
+      c.appendChild(e)});d.appendChild(c)}
+  log.appendChild(d);log.scrollTop=log.scrollHeight;
+}
+f.onsubmit=async e=>{
+  e.preventDefault(); const text=q.value.trim(); if(!text)return;
+  add('Command','var(--amber)',text); q.value=''; b.disabled=true;
+  const t0=performance.now();
+  try{
+    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question:text,scenario_id:'lodge-confirmed'})});
+    if(!r.ok){add('Astra unavailable','var(--ink3)',
+      `/api/ask returned ${r.status}. The endpoint is not deployed yet — the measured facts on this page are unaffected.`);}
+    else{const d=await r.json();
+      add('Astra','var(--tealt)',d.answer??JSON.stringify(d),d.tool_calls);
+      if(d.model||d.elapsed_ms) add('','var(--ink3)',`${d.model??''} · ${d.elapsed_ms??Math.round(performance.now()-t0)} ms`);}
+  }catch(err){add('Astra unreachable','var(--ink3)',
+    `${err.message}. The endpoint is not deployed yet — the measured facts on this page are unaffected.`);}
+  b.disabled=false; q.focus();
+};
+</script>
+</body>
+</html>
