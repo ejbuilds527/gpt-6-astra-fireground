@@ -237,6 +237,7 @@ svg{display:block;width:100%;height:auto;background:var(--sunk);border-radius:4p
 .dch{font-size:12px;padding:8px 10px;border-radius:3px;margin-bottom:6px;line-height:1.45}
 .dch.block{background:rgba(200,85,61,.13);border:1px solid var(--red);color:#e8a091}
 .dch.q{background:var(--sunk);border:1px solid var(--rule2);color:var(--ink2)}
+.tm{font-family:var(--mono);font-size:12px;font-weight:700;fill:#EF8200}
 .alarm{margin-top:11px;background:rgba(200,85,61,.12);border:1px solid var(--red);color:#e8a091;
   border-radius:4px;padding:9px 12px;font-size:12.5px;line-height:1.45}
 .laypair{display:flex;gap:12px;align-items:flex-end;margin-top:4px}
@@ -439,23 +440,30 @@ details[open].card summary::after{content:"  \2212"}
     <div class="card">
       <h2>The loop</h2>
       <div class="maplay">
-        <img src="shuttle-map.png" alt="The one-way tanker loop: Valley Rd, Silvermine, Heather, Carter, back to Silvermine">
-        <svg viewBox="0 0 560 520" class="ov">
-          <path d="M258.8 205.4 L262.3 208.7 L265.4 211.7 L269.2 214.8 L276.7 220.6 L286.0 227.4 L293.2 231.7 L301.7 236.2 L314.4 243.2 L322.1 246.5 L333.4 250.9 L334.8 251.5 L339.4 254.4 L342.0 256.2 L347.6 259.4 L349.6 252.4 L344.4 257.6 L353.0 264.4 L355.8 266.9 L363.2 273.3 L368.0 278.3 L370.0 280.7 L371.2 282.9 L374.6 288.0 L379.8 293.6 L385.6 298.4 L388.2 301.2 L389.4 302.8 L391.9 306.7 L394.9 310.9 L399.6 316.4 L402.7 320.8 L407.9 318.6 L411.7 314.4 L408.2 309.5 L402.3 302.4 L398.4 296.4 L395.5 292.9 L393.0 290.3 L390.1 287.8 L383.8 281.9 L382.7 280.7 L379.1 274.4 L376.1 270.9 L372.7 267.3 L367.1 262.1 L359.9 255.9 L351.8 249.6 L348.3 247.1 L345.5 245.2 L340.3 241.9 L337.5 240.6 L326.2 236.3 L319.4 233.4 L307.0 226.5 L298.5 222.1 L292.2 218.3 L283.3 211.8 L281.5 210.3 L275.1 207.3 L269.4 211.1 L265.9 214.3 L261.7 218.0 L258.1 221.1 L255.5 224.1 L253.0 228.5 L250.8 232.2 L249.4 234.1 L247.4 235.4 L245.6 235.6 L234.5 235.8 L218.0 235.5 L209.0 235.5 L207.6 235.3 L207.0 235.2 L207.0 235.0 L206.7 234.7 L204.3 230.5 L202.5 227.9 L200.2 225.6 L197.7 224.1 L194.2 223.1 L189.9 223.1 L185.4 223.9 L172.1 227.8 L166.9 228.7 L164.5 228.8 L155.6 229.2 L152.1 236.3 L157.4 240.1 L165.0 239.8 L168.5 239.6 L174.9 238.4 L188.2 234.5 L190.9 234.1 L192.9 234.0 L193.6 234.3 L193.1 234.0 L194.0 234.9 L194.9 236.3 L197.4 240.5 L199.0 242.6 L201.8 244.9 L205.4 246.0 L208.3 246.4 L210.0 246.5 L217.8 246.5 L234.4 246.8 L246.1 246.6 L251.5 245.6 L256.7 242.3 L260.0 238.3 L262.5 234.0 L264.6 230.3 L265.7 229.1 L276.8 219.2 L281.0 212.3 L276.1 206.2 L272.7 203.4 L267.4 198.4 L266.5 197.5" stroke="#EF8200" stroke-width="6" fill="none" stroke-linejoin="round"/>
-          <g transform="translate(347.6,259.4) rotate(-26.4)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g><g transform="translate(382.7,280.7) rotate(-122.5)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g><g transform="translate(249.4,234.1) rotate(136.9)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g><g transform="translate(190.9,234.1) rotate(-5.7)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g><g transform="translate(265.7,229.1) rotate(-42.3)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g>
-          <circle cx="262.5" cy="201.4" r="10" fill="#c8553d" stroke="#1c1f25" stroke-width="3"/>
-          <circle cx="348.8" cy="251.8" r="10" fill="#5aabb3" stroke="#1c1f25" stroke-width="3"/>
-          <circle cx="407.9" cy="318.6" r="6" fill="#8f9aa4" stroke="#1c1f25" stroke-width="2"/>
-          <circle cx="152.1" cy="236.3" r="6" fill="#8f9aa4" stroke="#1c1f25" stroke-width="2"/>
+        <img src="shuttle-map.png" alt="The one-way tanker loop through Heather, Weeburn, Snowberry, Buttery and Carter">
+        <svg viewBox="0 0 560 540" class="ov">
+          <path d="M259.1 135.0 L262.7 138.4 L265.8 141.3 L269.6 144.4 L277.0 150.2 L286.4 157.0 L293.5 161.3 L302.1 165.8 L314.8 172.9 L322.5 176.1 L333.8 180.5 L335.2 181.1 L339.8 184.0 L342.4 185.8 L347.9 189.0 L349.9 182.0 L344.7 187.2 L353.3 194.1 L356.2 196.5 L363.5 202.9 L368.4 207.9 L370.4 210.3 L371.6 212.5 L375.0 217.7 L380.2 223.2 L385.9 228.0 L388.5 230.9 L389.8 232.4 L392.3 236.3 L395.2 240.5 L399.9 246.0 L403.1 250.4 L403.2 246.2 L403.2 245.2 L400.2 247.6 L397.2 250.7 L395.1 253.2 L391.8 258.1 L388.7 263.0 L386.6 266.4 L383.3 272.2 L382.1 273.9 L381.2 274.9 L382.0 274.5 L380.9 274.4 L374.9 273.7 L369.7 274.3 L365.5 275.8 L361.1 278.9 L356.8 283.1 L353.9 287.9 L352.4 292.6 L350.9 301.3 L350.0 306.8 L349.9 311.1 L350.5 314.5 L352.9 326.0 L353.4 328.4 L353.6 329.3 L352.7 332.5 L351.1 335.5 L349.3 345.9 L359.5 351.6 L356.6 350.5 L356.6 350.5 L356.3 350.8 L350.8 352.3 L347.9 352.8 L343.6 353.4 L340.4 354.8 L336.0 357.5 L332.8 360.4 L330.1 364.5 L329.1 368.9 L329.0 373.0 L329.7 378.4 L332.4 385.9 L336.1 396.6 L338.8 392.2 L332.4 394.6 L322.4 398.1 L311.8 401.5 L309.7 402.3 L307.9 402.3 L304.5 402.9 L302.8 402.9 L299.5 402.7 L295.8 402.9 L288.1 403.5 L286.4 403.4 L287.5 403.8 L288.3 404.6 L288.9 405.6 L287.6 401.4 L284.7 397.8 L279.2 396.7 L274.8 399.6 L273.0 403.4 L274.1 402.4 L278.4 402.2 L278.1 401.5 L275.8 398.7 L272.4 396.4 L268.1 395.3 L263.4 396.4 L257.3 400.3 L255.2 401.5 L258.0 402.4 L260.1 403.4 L258.9 399.4 L258.3 397.5 L256.5 392.4 L254.8 388.4 L248.6 375.5 L238.3 352.6 L236.1 348.2 L232.3 341.9 L213.8 309.5 L209.2 302.3 L205.7 299.2 L200.8 297.3 L196.5 297.4 L193.0 298.1 L186.5 299.8 L177.6 302.7 L171.1 304.6 L170.6 304.7 L170.4 304.5 L171.0 305.2 L169.9 302.8 L165.5 288.4 L163.8 283.9 L160.7 273.6 L159.2 268.7 L158.5 262.7 L158.4 257.7 L158.3 251.7 L157.9 241.1 L157.9 230.7 L157.8 217.4 L157.2 184.7 L157.3 180.2 L157.9 174.7 L158.4 170.8 L158.5 166.9 L156.0 170.1 L157.7 169.7 L165.4 169.4 L168.8 169.2 L175.2 168.0 L188.6 164.1 L191.3 163.7 L193.3 163.7 L194.0 163.9 L193.5 163.6 L194.3 164.5 L195.3 165.9 L197.7 170.1 L199.3 172.2 L202.2 174.5 L205.7 175.7 L208.7 176.1 L210.3 176.1 L218.2 176.1 L234.8 176.4 L246.5 176.2 L251.9 175.2 L257.1 171.9 L260.3 167.9 L262.9 163.6 L265.0 159.9 L266.0 158.7 L277.1 148.8 L281.4 141.9 L276.5 135.8 L273.0 133.0 L267.7 128.1 L266.8 127.1" stroke="#EF8200" stroke-width="6" fill="none" stroke-linejoin="round"/>
+          <g transform="translate(347.9,189.0) rotate(-26.4)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g><g transform="translate(381.2,274.9) rotate(100.8)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g><g transform="translate(329.0,373.0) rotate(86.3)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g><g transform="translate(255.2,401.5) rotate(70.6)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g><g transform="translate(157.9,230.7) rotate(-90.3)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g><g transform="translate(246.5,176.2) rotate(-3.9)"><path d="M-11 -9 L13 0 L-11 9 Z" fill="#EF8200"/></g>
+          <circle cx="262.9" cy="131.0" r="10" fill="#c8553d" stroke="#1c1f25" stroke-width="3"/>
+          <circle cx="349.1" cy="181.5" r="10" fill="#5aabb3" stroke="#1c1f25" stroke-width="3"/>
+          <circle cx="408.3" cy="248.3" r="5" fill="#8f9aa4"/>
+          <circle cx="329.5" cy="401.7" r="5" fill="#8f9aa4"/>
+          <circle cx="152.4" cy="165.9" r="5" fill="#8f9aa4"/>
           <g class="mk">
-            <text x="248" y="197" text-anchor="end" style="fill:#e08a78">DUMP</text>
-            <text x="248" y="211" text-anchor="end" class="mkS">closed Valley Rd</text>
-            <text x="364" y="250" style="fill:#5aabb3">FILL 1-18</text>
-            <text x="364" y="264" class="mkS">856 gpm</text>
-            <text x="419" y="323" class="mkS">HEATHER</text>
-            <text x="141" y="240" text-anchor="end" class="mkS">CARTER</text>
-            <text x="14" y="24">ONE WAY &middot; 2.99 mi</text>
-            <text x="14" y="42" class="mkS">always forward &middot; never reverse, never pass</text>
+            <text x="248" y="128" text-anchor="end" style="fill:#e08a78">DUMP</text>
+            <text x="248" y="142" text-anchor="end" class="mkS">closed Valley Rd</text>
+            <text x="248" y="157" text-anchor="end" class="tm">DUMP 1.67 min</text>
+            <text x="364" y="179" style="fill:#5aabb3">FILL 1-18</text>
+            <text x="364" y="193" class="mkS">856 gpm</text>
+            <text x="364" y="208" class="tm">FILL 2.92 min</text>
+            <text x="418" y="252" class="mkS">HEATHER</text>
+            <text x="329" y="418" text-anchor="middle" class="mkS">BUTTERY</text>
+            <text x="142" y="170" text-anchor="end" class="mkS">CARTER</text>
+            <text x="14" y="24">ONE WAY &middot; 4.27 mi</text>
+            <text x="14" y="42" class="mkS">Silvermine &middot; Heather &middot; Weeburn &middot; Snowberry &middot; Buttery &middot; Carter</text>
+            <text x="14" y="58" class="tm">TRAVEL 9.90 min</text>
+            <text x="14" y="76" class="mkS">always forward &middot; never reverse, never pass</text>
+            <text x="14" y="94" class="tm">LOOP 16.52 min</text>
           </g>
         </svg>
       </div>
@@ -467,22 +475,22 @@ details[open].card summary::after{content:"  \2212"}
       <div class="card" style="margin-bottom:14px">
         <h2>Turnaround</h2>
         <div class="two">
-          <div><div class="tv">4</div><div class="tk">TANKERS</div></div>
-          <div><div class="tv">13.3</div><div class="tk">MIN LOOP</div></div>
+          <div><div class="tv">5</div><div class="tk">TANKERS</div></div>
+          <div><div class="tv">16.5</div><div class="tk">MIN LOOP</div></div>
         </div>
-        <div class="tsub">753 gpm delivered &middot; 680 needed &middot; margin +73</div>
+        <div class="tsub">757 gpm delivered &middot; 680 needed &middot; five tankers</div>
       </div>
       <div class="card">
         <h2>The cycle &middot; every row from a rate</h2>
         <table>
           <tr><th>leg</th><th class="r">min</th><th class="dim">from</th></tr>
-          <tr><td>travel, the whole loop</td><td class="r">6.70</td><td class="dim">routed, 2.99 mi</td></tr>
+          <tr><td>travel, the whole loop</td><td class="r">9.93</td><td class="dim">routed, 4.27 mi</td></tr>
           <tr><td>fill at 1-18</td><td class="r">2.92</td><td class="dim">2,500 &divide; 856 gpm</td></tr>
           <tr><td>dump into the pond</td><td class="r">1.67</td><td class="dim">2,500 &divide; 1,500 gpm</td></tr>
           <tr><td>manoeuvre, both ends</td><td class="r">2.00</td><td class="dim">60 s each</td></tr>
-          <tr><td><b>LOOP</b></td><td class="r"><b>13.29</b></td><td class="dim">the sum</td></tr>
+          <tr><td><b>LOOP</b></td><td class="r"><b>16.52</b></td><td class="dim">the sum</td></tr>
         </table>
-        <div class="tsub">one tanker = 2,500 &divide; 13.29 = <b>188 gpm</b></div>
+        <div class="tsub">one tanker = 2,500 &divide; 16.52 = <b>151 gpm</b></div>
         <table style="margin-top:10px">
           <tr><th>tankers</th><th class="r">gpm</th><th class="r">hydrant busy</th></tr>
           <tr><td>3</td><td class="r bad">564</td><td class="r">66%</td></tr>
