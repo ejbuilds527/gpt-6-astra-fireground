@@ -29,6 +29,32 @@ function Calculation({ call }: { call?: Data }) {
 
 // children carries server-rendered nodes the page passes in — the maps, which read MAPS_API_KEY
 // on the server and cannot be imported into a client component.
+// The tone is generated, not loaded: a 2.2 s steady tone then three clipped beeps.
+// The dispatch is a recorded file so it sounds identical on every machine.
+function soundTheTone() {
+  try {
+    const C = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const beep = (hz: number, at: number, ms: number, gain: number) => {
+      const t = C.currentTime + at, o = C.createOscillator(), g = C.createGain();
+      o.type = 'sine'; o.frequency.value = hz; o.connect(g); g.connect(C.destination);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(gain, t + 0.02);
+      g.gain.setValueAtTime(gain, t + ms / 1000 - 0.03);
+      g.gain.linearRampToValueAtTime(0, t + ms / 1000);
+      o.start(t); o.stop(t + ms / 1000 + 0.02);
+    };
+    beep(1000, 0, 2200, 0.24);
+    beep(1300, 2.45, 170, 0.26);
+    beep(1300, 2.75, 170, 0.26);
+    beep(1300, 3.05, 170, 0.26);
+  } catch { /* a browser that blocks audio must not stop the run */ }
+  try {
+    const a = new Audio('/dispatch.m4a');
+    a.volume = 1;
+    setTimeout(() => { a.play().catch(() => {}); }, 3900);
+  } catch { /* the clock and the run never depend on sound */ }
+}
+
 export function Surface({ role, identity, initial, children }: { role: Role; identity: SurfaceIdentity; initial: Data | null; children?: ReactNode }) {
   const [data, setData] = useState(initial);
   const [error, setError] = useState('');
@@ -136,7 +162,7 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
     {!data ? <div className="view on"><Card title="Incident inputs unavailable"><p>The live connection is retrying. No values have been assumed.</p></Card></div> : <div className="view on">
       <div className="sub">{data.scenario?.dispatch} · {data.scenario?.confidence}</div>
       {role === 'command' && <>
-        <div className="addrbar"><button className="go" disabled={pending || astraRunning} onClick={async () => { await command({ action: 'tone' }); runDecide(); }}>TONE / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
+        <div className="addrbar"><button className="go" disabled={pending || astraRunning} onClick={async () => { await (soundTheTone(), command({ action: 'tone' })); runDecide(); }}>TONE / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
         <div className="clock"><div className={over ? 'warn' : ''}><div className="dim">TURNOUT{held ? ' · HELD' : ''}</div><div className="big">{elapsed === null ? '—' : over ? '+' + number(-remaining, 0) : number(remaining, 0)}<span className="unit">{elapsed === null ? `s · ${windowSeconds} s on the tone` : over ? `s over ${windowSeconds}` : `s left of ${windowSeconds}`}</span></div></div><div style={{ flex: 1 }}><Stages stages={data.stages}/></div></div>
         <section className="card fg-astra">
           <h2>Astra · the decision run<span className={'runflag ' + (astraRunning ? 'on' : '')}>{astraRunning ? 'RUNNING' : astra.length ? 'COMPLETE' : 'NOT RUN'}</span></h2>
