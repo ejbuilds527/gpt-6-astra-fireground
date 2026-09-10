@@ -108,6 +108,8 @@ svg{display:block;width:100%;height:auto;background:var(--sunk);border-radius:4p
 .addrbar{display:flex;gap:8px;margin:16px 0 4px}
 #addr{flex:1;background:var(--sunk);border:1px solid var(--rule2);color:var(--ink);
   border-radius:4px;padding:10px 12px;font:14px var(--body)}
+.go[disabled]{opacity:.38;cursor:default;border-color:var(--rule);color:var(--ink3)}
+#addr[readonly]{color:var(--ink2)}
 .go,.drawerbtn{background:var(--sunk);border:1.5px solid var(--rule2);color:var(--ink2);
   border-radius:4px;padding:10px 14px;font:600 11px var(--body);letter-spacing:.08em;cursor:pointer}
 .go{border-color:var(--orange);color:var(--orange)}
@@ -270,8 +272,8 @@ details[open].card summary::after{content:"  \2212"}
   </div>
 
   <div class="addrbar">
-    <input id="addr" value="208 Valley Rd, New Canaan, CT" spellcheck="false">
-    <button class="go">RECALCULATE</button>
+    <input id="addr" value="208 Valley Rd, New Canaan, CT" spellcheck="false" readonly>
+    <button class="go" disabled title="Any address in this footprint recalculates. Wired to /api/decide, not to this page.">RECALCULATE</button>
     <button class="drawerbtn" id="dopen">80 s TRACE &nbsp;&rsaquo;</button>
   </div>
 
