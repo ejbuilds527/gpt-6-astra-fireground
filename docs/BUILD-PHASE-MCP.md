@@ -46,11 +46,16 @@ be computed returns `unknown` with a reason — never zero, never an optimistic 
 **A hydrant with no flow test returns `unknown`.** Never a capacity inferred from marker colour
 alone, never from static pressure. NFPA 291 requires a flow test or live field readings.
 
-**Marker colour is a CLAIM, not a measurement.** The traced hydrants carry an NFPA 291 colour class
-read off the department's map. Treat it as a range with provenance, not a verified gpm.
+**Derive the NFPA 291 class from the MEASURED flow, never from the icon.** An earlier pass read the
+red `P` marker as a low-flow class. It denotes a PRIVATE hydrant. All three here are orange,
+500-999 gpm. Colour on a map is a rendering choice; the flow rate is the fact.
 
-**H4 is PRIVATE.** A private hydrant on hospital property is not automatically available. Surface
-the ownership; do not silently rank it as public supply.
+**1-07 is PRIVATE.** A private hydrant on hospital property is not automatically available. Surface
+the water department field; never silently rank it as public supply.
+
+**Flow-test age is a first-class field.** 1-07 was SERVICED 2025-11-17 but last FLOW TESTED
+2024-10-14 — 696 days. Those are two different dates and the app must not read the newer one as
+currency of the flow figure. Anything over 365 days renders stale.
 
 **`shuttle_plan` is honest about routing.** Travel time is an operator input, not a measurement.
 It returns ungraded, and ungraded never renders green.
@@ -73,9 +78,16 @@ Worked example, and the demo turns on it:
 
 ## The two scenarios
 
-    A  hydrants in service     the nearest hydrant is the WEAKEST. H4 89 ft private under-500,
-                               H3 133 ft under-500, H1 619 ft 500-999. Demand 430 gpm.
-                               Astra must argue for H1 over the closer two, and say why.
+    A  hydrants in service     REAL department records, read from the New Canaan app:
+
+                                 1-07  234 ft  530.79 gpm  margin +101  PRIVATE  test 696d STALE
+                                 1-09  517 ft  665.00 gpm  margin +235  public   test 297d
+                                 1-21  867 ft  608.00 gpm  margin +178  public   test 174d
+
+                               Demand 430 gpm. The NEAREST hydrant is the worst choice on three
+                               counts at once: private, thinnest margin, and a flow test nearly two
+                               years old. Astra must argue for 1-09 at twice the distance and name
+                               all three reasons.
     B  all hydrants out        every hydrant red-tagged. No positive-pressure option.
                                Tanker shuttle, fill site, portable ponds. Shuttle timings ungraded.
 
