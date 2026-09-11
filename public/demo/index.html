@@ -267,9 +267,10 @@ details[open].card summary::after{content:"  \2212"}
   <div class="dispatch">
     <button class="tone" id="tone">SOUND THE TONE</button>
     <button class="stopb" id="stopb">STOP</button>
+    <button class="stopb" id="voiceb" title="Which dispatcher reads the call">DISPATCHER &middot; MALE</button>
     <div class="clockbox"><div class="cv" id="cv">80</div><div class="ck">SECONDS &middot; NFPA 1710 TURNOUT</div></div>
     <div class="cad" id="cad">standing by</div>
-    <audio id="dispatchAudio" src="dispatch.m4a" preload="auto"></audio>
+    <audio id="dispatchAudio" src="dispatch-male.m4a" preload="auto"></audio>
   </div>
 
   <div class="addrbar">
@@ -926,6 +927,24 @@ function stopAll(){
   document.getElementById("cad").textContent="standing by";
 }
 document.getElementById("stopb").addEventListener("click",stopAll);
+// ---- WHICH DISPATCHER READS THE CALL --------------------------------------
+// ash in command voice, or marin in the same command voice. A per-viewer
+// choice, so it is localStorage. Both are the hard-stopped script.
+var VKEY="fireground.dispatch.voice";
+function voiceNow(){ try{ return localStorage.getItem(VKEY)==="female"?"female":"male"; }catch(e){ return "male"; } }
+function paintVoice(){
+  var b=document.getElementById("voiceb"), a=document.getElementById("dispatchAudio"), v=voiceNow();
+  if(b) b.textContent="DISPATCHER \u00B7 "+(v==="female"?"FEMALE":"MALE");
+  var want="dispatch-"+v+".m4a";
+  if(a && a.getAttribute("src")!==want){ a.setAttribute("src",want); try{ a.load(); }catch(e){} }
+}
+document.getElementById("voiceb").addEventListener("click",function(){
+  var next = voiceNow()==="male" ? "female" : "male";
+  try{ localStorage.setItem(VKEY,next); }catch(e){}
+  paintVoice();
+  vlog("dispatcher voice -> "+next);
+});
+paintVoice();
 document.getElementById("tone").addEventListener("click",function(){
   stopAll();
   var b=this, cv=document.getElementById("cv"), cad=document.getElementById("cad");
