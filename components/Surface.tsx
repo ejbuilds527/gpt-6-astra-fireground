@@ -82,6 +82,9 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
   const [asking, setAsking] = useState(false);
   const [astra, setAstra] = useState<Data[]>([]);
   const [astraRunning, setAstraRunning] = useState(false);
+  // The decision run is a long NDJSON stream. Without a handle on it, STOP / RESET
+  // cleared the clock and left RUNNING blinking until the stream finished on its own.
+  const decideAbort = useRef<AbortController | null>(null);
   const traceButton = useRef<HTMLButtonElement>(null);
   const traceClose = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -139,10 +142,19 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
     finally { setPending(false); }
   }
   // /api/decide answers with one JSON object per line, so each stage is drawn the moment it lands.
+  function stopDecide() {
+    decideAbort.current?.abort();
+    decideAbort.current = null;
+    setAstraRunning(false);
+    setAstra([]);
+  }
   async function runDecide() {
+    decideAbort.current?.abort();
+    const ac = new AbortController();
+    decideAbort.current = ac;
     setAstra([]); setAstraRunning(true);
     try {
-      const response = await fetch('/api/decide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const response = await fetch('/api/decide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}', signal: ac.signal });
       if (!response.ok || !response.body) { setError('The decision run did not start (' + response.status + ').'); return; }
       const reader = response.body.getReader(), decoder = new TextDecoder();
       let buffer = '';
@@ -156,8 +168,8 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
           try { const stage = JSON.parse(line); setAstra(stages => [...stages, stage]); } catch {}
         }
       }
-    } catch { setError('The decision run was interrupted before it finished.'); }
-    finally { setAstraRunning(false); }
+    } catch { if (!ac.signal.aborted) setError('The decision run was interrupted before it finished.'); }
+    finally { if (decideAbort.current === ac) { decideAbort.current = null; setAstraRunning(false); } }
   }
   async function ask(e: React.FormEvent) {
     e.preventDefault(); if (asking) return;
@@ -182,7 +194,7 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
     {!data ? <div className="view on"><Card title="Incident inputs unavailable"><p>The live connection is retrying. No values have been assumed.</p></Card></div> : <div className="view on">
       <div className="sub">{data.scenario?.dispatch} · {data.scenario?.confidence}</div>
       {role === 'command' && <>
-        <div className="addrbar"><button className="go" disabled={pending || astraRunning} onClick={async () => { await (soundTheTone(), command({ action: 'tone' })); runDecide(); }}>SOUND THE TONE</button><button className="drawerbtn" disabled={pending || !data.tone_at} onClick={() => { silenceTone(); command({ action: 'reset' }); }}>STOP / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
+        <div className="addrbar"><button className="go" disabled={pending || astraRunning} onClick={async () => { await (soundTheTone(), command({ action: 'tone' })); runDecide(); }}>SOUND THE TONE</button><button className="drawerbtn" disabled={pending || !data.tone_at} onClick={() => { silenceTone(); stopDecide(); command({ action: 'reset' }); }}>STOP / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
         <div className="clock"><div className={over ? 'warn' : ''}><div className="dim">TURNOUT{held ? ' · HELD' : ''}</div><div className="big">{elapsed === null ? '—' : over ? '+' + number(-remaining, 0) : number(remaining, 0)}<span className="unit">{elapsed === null ? `s · ${windowSeconds} s on the tone` : over ? `s over ${windowSeconds}` : `s left of ${windowSeconds}`}</span></div></div><div style={{ flex: 1 }}><Stages stages={data.stages}/></div></div>
         <section className="card fg-astra">
           <h2>Astra · the decision run<span className={'runflag ' + (astraRunning ? 'on' : '')}>{astraRunning ? 'RUNNING' : astra.length ? 'COMPLETE' : 'NOT RUN'}</span></h2>
