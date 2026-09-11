@@ -43,6 +43,14 @@ function silenceTone() {
   if (toneCtx) { try { void toneCtx.close(); } catch {} toneCtx = null; }
 }
 
+// Which dispatcher reads the call. A per-viewer choice, so it is localStorage and
+// not a setting: it changes nothing any number depends on.
+const VOICE_KEY = 'fireground.dispatch.voice';
+export type DispatchVoice = 'male' | 'female';
+function storedVoice(): DispatchVoice {
+  try { return localStorage.getItem(VOICE_KEY) === 'female' ? 'female' : 'male'; } catch { return 'male'; }
+}
+
 function soundTheTone() {
   silenceTone();
   try {
@@ -63,7 +71,7 @@ function soundTheTone() {
     beep(1300, 3.05, 170, 0.26);
   } catch { /* a browser that blocks audio must not stop the run */ }
   try {
-    const a = new Audio('/dispatch.m4a');
+    const a = new Audio('/dispatch-' + storedVoice() + '.m4a');
     a.volume = 1;
     dispatchAudio = a;
     dispatchTimer = setTimeout(() => { a.play().catch(() => {}); }, 3900);
@@ -82,6 +90,9 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
   const [asking, setAsking] = useState(false);
   const [astra, setAstra] = useState<Data[]>([]);
   const [astraRunning, setAstraRunning] = useState(false);
+  // Starts at the default on both server and client, then reads the stored choice
+  // after mount, so the markup React hydrates against always matches.
+  const [voice, setVoice] = useState<DispatchVoice>('male');
   // The decision run is a long NDJSON stream. Without a handle on it, STOP / RESET
   // cleared the clock and left RUNNING blinking until the stream finished on its own.
   const decideAbort = useRef<AbortController | null>(null);
@@ -120,6 +131,12 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
     }, 250);
     return () => clearInterval(timer);
   }, [role, data?.tone_at, holdMs]);
+  useEffect(() => { setVoice(storedVoice()); }, []);
+  function flipVoice() {
+    const next: DispatchVoice = voice === 'male' ? 'female' : 'male';
+    setVoice(next);
+    try { localStorage.setItem(VOICE_KEY, next); } catch {}
+  }
   useEffect(() => {
     if (!trace) return;
     traceClose.current?.focus();
@@ -194,7 +211,7 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
     {!data ? <div className="view on"><Card title="Incident inputs unavailable"><p>The live connection is retrying. No values have been assumed.</p></Card></div> : <div className="view on">
       <div className="sub">{data.scenario?.dispatch} · {data.scenario?.confidence}</div>
       {role === 'command' && <>
-        <div className="addrbar"><button className="go" disabled={pending || astraRunning} onClick={async () => { await (soundTheTone(), command({ action: 'tone' })); runDecide(); }}>SOUND THE TONE</button><button className="drawerbtn" disabled={pending || !data.tone_at} onClick={() => { silenceTone(); stopDecide(); command({ action: 'reset' }); }}>STOP / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
+        <div className="addrbar"><button className="go" disabled={pending || astraRunning} onClick={async () => { await (soundTheTone(), command({ action: 'tone' })); runDecide(); }}>SOUND THE TONE</button><button className="drawerbtn" disabled={pending || !data.tone_at} onClick={() => { silenceTone(); stopDecide(); command({ action: 'reset' }); }}>STOP / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button className="drawerbtn" onClick={flipVoice} title="Which dispatcher reads the call">DISPATCHER · {voice === 'male' ? 'MALE' : 'FEMALE'}</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
         <div className="clock"><div className={over ? 'warn' : ''}><div className="dim">TURNOUT{held ? ' · HELD' : ''}</div><div className="big">{elapsed === null ? '—' : over ? '+' + number(-remaining, 0) : number(remaining, 0)}<span className="unit">{elapsed === null ? `s · ${windowSeconds} s on the tone` : over ? `s over ${windowSeconds}` : `s left of ${windowSeconds}`}</span></div></div><div style={{ flex: 1 }}><Stages stages={data.stages}/></div></div>
         <section className="card fg-astra">
           <h2>Astra · the decision run<span className={'runflag ' + (astraRunning ? 'on' : '')}>{astraRunning ? 'RUNNING' : astra.length ? 'COMPLETE' : 'NOT RUN'}</span></h2>
