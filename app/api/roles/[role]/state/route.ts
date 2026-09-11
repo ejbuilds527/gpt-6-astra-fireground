@@ -6,6 +6,7 @@ import { incidentRef, incidentView, initialIncident } from '@/lib/incident';
 export const runtime = 'nodejs';
 const action = z.discriminatedUnion('action', [
   z.object({action:z.literal('tone')}),
+  z.object({action:z.literal('reset')}),
   z.object({action:z.literal('lines'),ids:z.array(z.string()).max(30)}),
   z.object({action:z.literal('confirm')}),
   z.object({action:z.literal('select'), option:z.enum(['SHUTTLE','RELAY','BOTH'])}),
@@ -41,6 +42,9 @@ export async function POST(request:Request,ctx:{params:Promise<{role:string}>}) 
         change={line_ids:a.ids};
       }
       if(a.action==='tone') change={...initialIncident,tone_at:Date.now()};
+      // STOP AND RESET ARE ONE ACT. tone_at null is the standing-by state, and the
+      // clock is server state, so nothing a browser does can clear it.
+      if(a.action==='reset') change={...initialIncident,tone_at:null};
       if(a.action==='confirm') change={scenario_id:'lodge-confirmed'};
       if(a.action==='select') change={selected_option:a.option};
       if(a.action==='hold') change={hold_south:a.held};
