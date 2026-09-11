@@ -115,6 +115,11 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
     try {
       const response = await fetch('/api/roles/command/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Command was not saved.');
+      // THE CLOCK MUST ANSWER THE PRESS, NOT THE ROUND TRIP. tone_at is server state and
+      // it returns over the events stream, which took 4 s measured. A control that does
+      // nothing for 4 s reads as a dead control, so reflect these two locally at once.
+      if (payload.action === 'reset') setData(d => (d ? { ...d, tone_at: null } : d));
+      if (payload.action === 'tone') setData(d => (d ? { ...d, tone_at: Date.now() } : d));
     } catch (e) { setError(e instanceof Error ? e.message : 'Command was not saved.'); }
     finally { setPending(false); }
   }
