@@ -31,9 +31,23 @@ function Calculation({ call }: { call?: Data }) {
 // on the server and cannot be imported into a client component.
 // The tone is generated, not loaded: a 2.2 s steady tone then three clipped beeps.
 // The dispatch is a recorded file so it sounds identical on every machine.
+// Held at module scope so STOP / RESET can reach them. A tone scheduled inside a
+// closure is a tone nothing can cancel, and the dispatch spoke over a reset.
+let toneCtx: AudioContext | null = null;
+let dispatchAudio: HTMLAudioElement | null = null;
+let dispatchTimer: ReturnType<typeof setTimeout> | null = null;
+
+function silenceTone() {
+  if (dispatchTimer) { clearTimeout(dispatchTimer); dispatchTimer = null; }
+  if (dispatchAudio) { try { dispatchAudio.pause(); dispatchAudio.currentTime = 0; } catch {} dispatchAudio = null; }
+  if (toneCtx) { try { void toneCtx.close(); } catch {} toneCtx = null; }
+}
+
 function soundTheTone() {
+  silenceTone();
   try {
     const C = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    toneCtx = C;
     const beep = (hz: number, at: number, ms: number, gain: number) => {
       const t = C.currentTime + at, o = C.createOscillator(), g = C.createGain();
       o.type = 'sine'; o.frequency.value = hz; o.connect(g); g.connect(C.destination);
@@ -51,7 +65,8 @@ function soundTheTone() {
   try {
     const a = new Audio('/dispatch.m4a');
     a.volume = 1;
-    setTimeout(() => { a.play().catch(() => {}); }, 3900);
+    dispatchAudio = a;
+    dispatchTimer = setTimeout(() => { a.play().catch(() => {}); }, 3900);
   } catch { /* the clock and the run never depend on sound */ }
 }
 
@@ -167,7 +182,7 @@ export function Surface({ role, identity, initial, children }: { role: Role; ide
     {!data ? <div className="view on"><Card title="Incident inputs unavailable"><p>The live connection is retrying. No values have been assumed.</p></Card></div> : <div className="view on">
       <div className="sub">{data.scenario?.dispatch} · {data.scenario?.confidence}</div>
       {role === 'command' && <>
-        <div className="addrbar"><button className="go" disabled={pending || astraRunning} onClick={async () => { await (soundTheTone(), command({ action: 'tone' })); runDecide(); }}>SOUND THE TONE</button><button className="drawerbtn" disabled={pending || !data.tone_at} onClick={() => command({ action: 'reset' })}>STOP / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
+        <div className="addrbar"><button className="go" disabled={pending || astraRunning} onClick={async () => { await (soundTheTone(), command({ action: 'tone' })); runDecide(); }}>SOUND THE TONE</button><button className="drawerbtn" disabled={pending || !data.tone_at} onClick={() => { silenceTone(); command({ action: 'reset' }); }}>STOP / RESET</button><button className="go" disabled={pending || data.scenario?.id === 'lodge-confirmed'} onClick={() => command({ action: 'confirm' })}>CONFIRM THE LODGE, MICHAEL’S HOUSE</button><button ref={traceButton} className="drawerbtn" aria-expanded={trace} aria-controls="surface-trace" onClick={() => setTrace(!trace)}>{number(data.window_seconds)} s TRACE ›</button></div>
         <div className="clock"><div className={over ? 'warn' : ''}><div className="dim">TURNOUT{held ? ' · HELD' : ''}</div><div className="big">{elapsed === null ? '—' : over ? '+' + number(-remaining, 0) : number(remaining, 0)}<span className="unit">{elapsed === null ? `s · ${windowSeconds} s on the tone` : over ? `s over ${windowSeconds}` : `s left of ${windowSeconds}`}</span></div></div><div style={{ flex: 1 }}><Stages stages={data.stages}/></div></div>
         <section className="card fg-astra">
           <h2>Astra · the decision run<span className={'runflag ' + (astraRunning ? 'on' : '')}>{astraRunning ? 'RUNNING' : astra.length ? 'COMPLETE' : 'NOT RUN'}</span></h2>
