@@ -64,13 +64,13 @@ of a department responds from the same house and does the same job on the incide
 
 | role | login | sees |
 |---|---|---|
-| command | `command@fireground.xyz` | everything. the only screen that decides. |
-| staging | `staging@fireground.xyz` | where to stage and the hold. no water math. |
-| shuttle | `shuttle@fireground.xyz` | the loop, the rotation, the cycle. |
-| tanker | `tanker@fireground.xyz` | my next move only. not the whole loop. |
-| relay | `relay@fireground.xyz` | my segment only. where to park, what pressure. |
+| command | given privately | everything. the only screen that decides. |
+| staging | given privately | where to stage and the hold. no water math. |
+| shuttle | given privately | the loop, the rotation, the cycle. |
+| tanker | given privately | my next move only. not the whole loop. |
+| relay | given privately | my segment only. where to park, what pressure. |
 
-Password is the role name plus `-fireground`. Demo credentials, synthetic incident.
+Demo logins are given privately and rotated. Synthetic incident. The public walkthrough is at `/demo`.
 
 ---
 

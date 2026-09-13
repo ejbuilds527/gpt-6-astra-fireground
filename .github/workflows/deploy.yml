@@ -39,6 +39,9 @@ jobs:
 
       # Cloud Build compiles the container from source. Secrets are referenced
       # from Secret Manager by name and never appear in this file or in a log.
+      # SECURITY, 2026-09-13: OPENAI_API_KEY and MAPS_API_KEY are no longer mounted.
+      # The live AI routes answer 503 and no Maps key reaches a page. The public
+      # showcase at /demo needs neither. See the Fireground security review.
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy astra-fd \
@@ -47,7 +50,7 @@ jobs:
             --project meerkatops-fireground \
             --allow-unauthenticated \
             --port 8080 \
-            --set-secrets "WORKOS_API_KEY=workos-api-key:latest,WORKOS_CLIENT_ID=workos-client-id:latest,WORKOS_COOKIE_PASSWORD=workos-cookie-password:latest,OPENAI_API_KEY=openai-api-key:latest,MAPS_API_KEY=maps-api-key:latest" \
+            --set-secrets "WORKOS_API_KEY=workos-api-key:latest,WORKOS_CLIENT_ID=workos-client-id:latest,WORKOS_COOKIE_PASSWORD=workos-cookie-password:latest" \
             --set-env-vars "WORKOS_REDIRECT_URI=${{ vars.WORKOS_REDIRECT_URI || 'https://fireground.meerkatops.app/callback' }},OPENAI_PROJECT=proj_4GXlBQT0XWnsEMhsHGHrYNcM" \
             --quiet
 
